@@ -1,0 +1,4 @@
+.practice-links { display:flex; gap:8px; flex-wrap:wrap; }
+.date-time-practice { display:grid; gap:12px; max-width:450px; }
+.date-time-practice h2,.practice-prompt { margin:0; }
+.practice-prompt { font-size:1.5rem; }

@@ -1,0 +1,117 @@
+/* The frequency list. Two things on the page: the bands to choose between,
+   and the characters in the one that is open. */
+
+.rk-bands {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 20px;
+}
+.rk-band {
+  appearance: none;
+  
+  font: inherit;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 9px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--ink);
+}
+.rk-band b {
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+.rk-band span {
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.rk-band:hover {
+  border-color: var(--accent);
+}
+/* The band being read is filled in, not merely outlined: a row of eleven
+   outlined boxes with one slightly different outline is not an answer to
+   "which one am I looking at". */
+.rk-band.here {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #17181a;
+}
+.rk-band.here span {
+  color: #17181a;
+  opacity: 0.75;
+}
+
+.rk-head {
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* DOWN THE COLUMNS, NOT ALONG THE ROWS.
+   A grid fills left to right, so #1 #2 #3 #4 #5 #6 ran across the top and the
+   next six under them -- which is a reading order nobody uses for a ranked
+   list. Columns of text fill top to bottom and then start the next column, so
+   the ranks descend the page the way a list should: #1 at the top left, down
+   to the foot of that column, and on at the top of the one beside it.
+   Multi-column rather than a grid with a row count, because how many rows
+   there is room for depends on the width of the pane, and this works it out
+   rather than being told. */
+.rk-grid {
+  column-width: 230px;
+  column-gap: 8px;
+}
+.rk-cell {
+  /* A cell cut in half across a column break is unreadable. */
+  break-inside: avoid;
+  margin-bottom: 8px;
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  grid-template-areas: "n ch py";
+  align-items: center;
+  column-gap: 10px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--card);
+  text-decoration: none;
+  color: inherit;
+  position: relative;
+}
+.rk-cell:hover {
+  border-color: var(--accent);
+}
+.rk-n {
+  grid-area: n;
+  font-size: 11.5px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  min-width: 3.4em;
+}
+.rk-ch {
+  grid-area: ch;
+  font-size: 26px;
+  line-height: 1.1;
+}
+.rk-py {
+  grid-area: py;
+  font-size: 13px;
+  color: var(--accent);
+}
+.rk-hsk {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  font-size: 10.5px;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0 6px;
+}

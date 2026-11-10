@@ -1,0 +1,185 @@
+/* The app's own dialogs.
+   
+   Every one of these replaced a window.confirm(): a grey slab pinned to the
+   top of the browser window, titled "the local address", that froze the page
+   underneath and looked like nothing else in Central. This is the same
+   question asked in the app's own voice, in the app's own colours, over the
+   page it belongs to.
+
+   The class names all begin ccd- and nothing here leans on .btn or .card.
+   Control carries a complete stylesheet of its own with its own .btn, and it
+   is loaded last on that page; a dialog that borrowed those would be a
+   different dialog there than everywhere else. Every colour is written with a
+   fallback for the same reason -- Control's tokens are its own and it has no
+   --bad and no --radius. */
+
+.ccd-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(6, 9, 12, 0.55);
+  animation: ccd-fade 120ms ease-out;
+}
+
+.ccd-box {
+  width: 100%;
+  max-width: 420px;
+  max-height: calc(100vh - 48px);
+  overflow: auto;
+  box-sizing: border-box;
+  padding: 22px 24px 18px;
+  background: var(--card, #fff);
+  color: var(--ink, #14181c);
+  border: 1px solid var(--line, #e3e7ec);
+  border-radius: 14px;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28), 0 2px 8px rgba(0, 0, 0, 0.16);
+  font: 14px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  animation: ccd-rise 140ms cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+
+.ccd-box:focus {
+  outline: none;
+}
+
+.ccd-box.wide {
+  max-width: 520px;
+}
+
+.ccd-title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 650;
+  line-height: 1.35;
+  /* A note's title goes in here, and a note's title can be a paragraph. */
+  overflow-wrap: anywhere;
+}
+
+/* The gold rule under a heading is Central's, and one this width reads as a
+   dialog's title rather than a page's. */
+.ccd-title::after {
+  content: "";
+  display: block;
+  width: 38px;
+  height: 3px;
+  border-radius: 2px;
+  margin-top: 8px;
+  background: var(--accent, #d99e00);
+}
+
+.ccd-box.danger .ccd-title::after {
+  background: var(--bad, #c8362f);
+}
+
+.ccd-body {
+  margin: 14px 0 0;
+  color: var(--muted, #5b6672);
+  font-size: 13.5px;
+}
+
+.ccd-body + .ccd-body {
+  margin-top: 9px;
+}
+
+.ccd-field {
+  margin-top: 16px;
+}
+
+.ccd-field input[type="text"] {
+  width: 100%;
+  box-sizing: border-box;
+  font: inherit;
+  font-size: 14px;
+  padding: 9px 12px;
+  border-radius: var(--radius, 9px);
+  border: 1px solid var(--line, #e3e7ec);
+  background: var(--bg, #f6f7f9);
+  color: var(--ink, #14181c);
+}
+
+.ccd-field input[type="text"]:focus {
+  outline: none;
+  border-color: var(--accent, #d99e00);
+}
+
+.ccd-row {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+
+/* Its own buttons, for the reason at the top of the file. */
+.ccd-btn {
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.2;
+  padding: 9px 16px;
+  border-radius: var(--radius, 9px);
+  border: 1px solid var(--line, #e3e7ec);
+  background: var(--card, #fff);
+  color: var(--ink, #14181c);
+  
+}
+
+.ccd-btn:hover:not(:disabled) {
+  border-color: var(--accent, #d99e00);
+  color: var(--accent, #d99e00);
+}
+
+.ccd-btn:focus-visible {
+  outline: 2px solid var(--accent, #d99e00);
+  outline-offset: 2px;
+}
+
+.ccd-btn:disabled {
+  opacity: 0.45;
+  
+}
+
+.ccd-btn.go {
+  background: var(--accent, #d99e00);
+  border-color: var(--accent, #d99e00);
+  color: #000;
+}
+
+.ccd-btn.go:hover:not(:disabled) {
+  color: #000;
+  filter: brightness(1.06);
+}
+
+.ccd-btn.bad {
+  background: var(--bad, #c8362f);
+  border-color: var(--bad, #c8362f);
+  color: #fff;
+}
+
+.ccd-btn.bad:hover:not(:disabled) {
+  color: #fff;
+  filter: brightness(1.1);
+}
+
+.ccd-btn.bad:focus-visible {
+  outline-color: var(--bad, #c8362f);
+}
+
+@keyframes ccd-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes ccd-rise {
+  from { opacity: 0; transform: translateY(10px) scale(0.985); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Asked for stillness, give stillness: the dialog is still there at once,
+   it just does not travel to get there. */
+@media (prefers-reduced-motion: reduce) {
+  .ccd-scrim, .ccd-box { animation: none; }
+}

@@ -1,0 +1,65 @@
+/* The pinyin chart's own style, as it stands in server.py. */
+
+.tonebar { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 16px; }
+.tonebar button { appearance: none; font: inherit; font-size: 14.5px;
+  font-weight: 600;  color: var(--muted);
+  background: var(--card); border: 1px solid var(--line);
+  border-radius: 999px; padding: 7px 14px; line-height: 1; }
+.tonebar button.here { color: var(--ink); border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent); }
+.tonebar .quiet { align-self: center; color: var(--muted);
+  font-size: 13px; }
+/* The chart's own palette, light and dark. */
+:root { --pc-pane:#fff; --pc-ink:#111; --pc-cell:#1a1a1a; --pc-bd:#999;
+  --pc-head:#c9c9c9; --pc-subbg:#e2e2e2; --pc-band:#efefef;
+  --pc-play:#c8362f; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --pc-pane:#171c22; --pc-ink:#e9edf1; --pc-cell:#dbe2e9; --pc-bd:#39424d;
+  --pc-head:#242c36; --pc-subbg:#1d242d; --pc-band:#1d232b;
+  --pc-play:#ff8177; } }
+:root[data-theme="dark"] {
+  --pc-pane:#171c22; --pc-ink:#e9edf1; --pc-cell:#dbe2e9; --pc-bd:#39424d;
+  --pc-head:#242c36; --pc-subbg:#1d242d; --pc-band:#1d232b;
+  --pc-play:#ff8177; }
+.pwrap { background: var(--pc-pane); border: 1px solid var(--pc-bd);
+  border-radius: 8px;
+  padding: 10px; width: fit-content; max-width: 100%; overflow-x: auto; }
+.pchart { border-collapse: collapse; background: var(--pc-pane);
+  color: var(--pc-ink); }
+.pchart th, .pchart td { padding: 0; text-align: left; }
+.pchart th.ghead { background: var(--pc-head); color: var(--pc-ink);
+  font-size: 16.5px;
+  font-weight: 700; text-align: center; padding: 5px 8px;
+  border: 1px solid var(--pc-bd); }
+.pchart th.sub, .pchart td.sub { background: var(--pc-subbg);
+  color: var(--pc-ink);
+  font-size: 14.5px; font-weight: 700; text-align: center;
+  padding: 4px 7px; border-top: 1px solid var(--pc-bd);
+  border-bottom: 1px solid var(--pc-bd); }
+/* A final that is a syllable on its own -- a, ai, ao, e, en, er -- is
+   clickable in the header row, but it is still a column heading: it keeps the
+   heading's colour, size and weight instead of arriving as a body cell in the
+   middle of the header. */
+.pchart th.sub .pcell { color: inherit; font: inherit; padding: 0; }
+.pchart th.sub .pcell.playing { color: var(--pc-play); }
+.pchart th.sub .pcell.off { opacity: .45; }
+.pchart td.lead { background: var(--pc-subbg); color: var(--pc-ink);
+  font-weight: 700;
+  font-size: 15.5px; text-align: center; padding: 2px 9px;
+  border-right: 1px solid var(--pc-bd); }
+.pchart .gstart { border-left: 1px solid var(--pc-bd); }
+.pchart tr.bandA td:not(.lead):not(.sub) { background: var(--pc-pane); }
+.pchart tr.bandB td:not(.lead):not(.sub) { background: var(--pc-band); }
+.pchart tr.bandtop td { border-top: 1px solid var(--pc-bd); }
+.pcell { appearance: none; font: inherit; font-size: 15.5px; 
+  color: var(--pc-cell); background: none; border: 0; padding: 5px 8px;
+  line-height: 1.1; }
+.pcell.xb { font-weight: 700; }
+.pcell.playing { color: var(--pc-play); }
+.pcell.off { opacity: .35; }
+.pnote { margin-top: 12px; font-size: 14px; color: var(--muted);
+  font-style: italic; }
+#others { margin-top: 14px; }
+.pcredit { margin-top: 22px; font-size: 12px; color: var(--muted); }
+#others .pcell { border: 1px solid var(--line); border-radius: 8px;
+  color: var(--ink); margin: 0 6px 6px 0; }

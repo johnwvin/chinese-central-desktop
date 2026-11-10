@@ -1,0 +1,351 @@
+/* The reader's style, lifted straight out of READ_BODY in server.py rather
+   than retyped -- the text layer's rules in particular are pdf.js's own, and
+   a span half a pixel out of place selects the wrong words. */
+
+#rd-pdf, #rd-pdf iframe { width: 100%; height: calc(100vh - 130px);
+  border: 0; }
+
+/* ---- PDFs, drawn here rather than handed to the browser -------------
+   Sheets down the middle of the page, each one a canvas with the PDF's own
+   text laid invisibly on top of it. The text layer is the whole point: it
+   is what makes a selection, and a selection is what the right-click menu
+   -- copy, look it up, split view -- works from. */
+.pf-reader-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; }
+.pf-reader-layout.side-open { grid-template-columns: 276px minmax(0, 1fr); }
+#pf-pages { margin: 0 auto 60px; width: fit-content; max-width: 100%; min-width: 0; }
+#pf-sidebar { position: sticky; top: 46px; height: calc(100vh - 62px);
+  margin-top: -20px;
+  display: flex; flex-direction: column; min-width: 0; overflow: hidden; align-self: start;
+  background: color-mix(in srgb, var(--card) 96%, var(--bg));
+  border: 1px solid color-mix(in srgb, var(--line) 82%, transparent);
+  border-radius: 14px; box-shadow: 0 18px 44px rgba(0,0,0,.22); }
+#pf-sidebar[hidden], #rd-epub-nav[hidden] { display: none; }
+.pf-open-side { position: sticky; top: 54px; z-index: 6; margin: -20px 0 8px; }
+.pf-side-controls { display: grid; gap: 10px; padding: 12px;
+  border-bottom: 1px solid var(--line); }
+.pf-side-head, .pf-side-row { display: flex; align-items: center; gap: 5px; }
+.pf-side-head { min-height: 38px; flex-wrap: wrap; }
+.pf-side-head .pfat { margin-left: auto; }
+.pf-side-head .pfat input { width: 3em; height: 34px; padding: 4px;
+  border-color: transparent; background: color-mix(in srgb, var(--bg) 75%, var(--card));
+  font-weight: 650; }
+.pf-side-head .pfat input:focus { border-color: var(--accent); outline: none; }
+.pf-icon-button { display: grid; place-items: center; flex: 0 0 auto;
+  width: 39px; height: 39px; padding: 9px; border: 0; border-radius: 9px;
+  background: transparent; color: var(--muted);  }
+.pf-icon-button svg { display: block; width: 19px; height: 19px; fill: none;
+  stroke: currentColor; stroke-width: 2; stroke-linecap: round;
+  stroke-linejoin: round; }
+.pf-icon-button:hover:not(:disabled) { color: var(--ink);
+  background: color-mix(in srgb, var(--ink) 8%, transparent); }
+.pf-icon-button:active:not(:disabled) { background: color-mix(in srgb, var(--ink) 13%, transparent); }
+.pf-icon-button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.pf-icon-button:disabled { opacity: .28;  }
+.pf-menu-button { margin-left: -4px; }
+.pf-side-row { justify-content: center; padding: 2px;
+  border-radius: 11px; background: color-mix(in srgb, var(--bg) 72%, var(--card)); }
+.rd-history { display: flex; align-items: center; gap: 2px; }
+.rd-history button { display: grid; place-items: center; width: 31px; height: 31px;
+  padding: 5px; border: 0; border-radius: 7px; background: transparent;
+  color: var(--muted);  }
+.rd-history svg { width: 18px; height: 18px; fill: none; stroke: currentColor;
+  stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.rd-history button:hover:not(:disabled) { color: var(--ink);
+  background: color-mix(in srgb, var(--ink) 8%, transparent); }
+.rd-history button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.rd-history button:disabled { opacity: .28;  }
+.pf-side-head .rd-history { margin-left: 2px; }
+#rd-epub-nav > .rd-history { justify-content: flex-end; padding: 6px 8px 2px; }
+.pf-tool-separator { width: 1px; height: 22px; margin: 0 5px;
+  background: var(--line); }
+.pfzoom { display: inline-flex; gap: 4px; margin-left: auto; }
+.pf-side-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px;
+  margin: 8px; padding: 3px; border: 0; border-radius: 10px;
+  background: color-mix(in srgb, var(--bg) 76%, var(--card)); }
+.pf-side-tabs button { min-width: 0; border: 0; border-radius: 7px;
+  padding: 8px 3px; background: transparent; color: var(--muted);
+   font: inherit; font-size: 11.5px; font-weight: 600; }
+.pf-side-tabs button:hover { color: var(--ink); }
+.pf-side-tabs button[aria-selected="true"] { color: var(--ink);
+  background: var(--card); box-shadow: 0 1px 4px rgba(0,0,0,.18); }
+.pf-thumbs, .pf-outline, #pf-sidebar > .rd-bookmarks { flex: 1; min-height: 0; overflow-y: auto;
+  scrollbar-gutter: stable; }
+.pf-thumb { display: flex; width: 100%; flex-direction: column; align-items: center;
+  gap: 5px; padding: 10px 8px; border: 0; border-left: 3px solid transparent;
+  background: transparent; color: var(--muted);  }
+.pf-thumb.current { color: var(--accent); border-left-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 9%, transparent); }
+.pf-thumb-paper { display: flex; align-items: center; justify-content: center;
+  position: relative;
+  width: 128px; min-height: 86px; background: #fff; color: #999;
+  box-shadow: 0 1px 4px rgba(0,0,0,.35); }
+.pf-thumb canvas { display: block; width: 128px; height: auto; }
+.pf-thumb b { font-size: 11px; font-weight: 500; }
+.pf-outline { padding: 7px 0; }
+.pf-outline p { padding: 10px 12px; margin: 0; color: var(--muted);
+  font-size: 12px; line-height: 1.4; }
+.pf-outline button { display: block; width: 100%; border: 0; padding: 8px 10px;
+  text-align: left; background: transparent; color: var(--ink); font: inherit;
+  font-size: 12px; line-height: 1.3;  }
+.pf-outline button:hover, .pf-outline button.current {
+  background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.pf-outline button.current { color: var(--accent); font-weight: 650; }
+.rd-epub-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; }
+.rd-epub-layout.side-open { grid-template-columns: 250px minmax(0, 1fr); }
+#rd-epub-nav { position: sticky; top: 16px; height: calc(100vh - 32px);
+  display: flex; flex-direction: column; min-width: 0; overflow: hidden; align-self: start; background: var(--card);
+  border: 1px solid var(--line); border-radius: 10px; }
+.rd-epub-tabs { display: grid; grid-template-columns: 1fr 1fr;
+  border-bottom: 1px solid var(--line); }
+.rd-epub-tabs button { border: 0; border-bottom: 2px solid transparent;
+  padding: 11px 5px 9px; background: transparent; color: var(--muted);
+   font: inherit; font-size: 12px; }
+.rd-epub-tabs button[aria-selected="true"] { color: var(--ink);
+  border-bottom-color: var(--accent); }
+#rd-epub-nav nav, #rd-epub-nav > .rd-bookmarks { flex: 1; min-height: 0; overflow-y: auto;
+  scrollbar-gutter: stable; padding: 6px 0; }
+#rd-epub-nav nav > button { display: grid; grid-template-columns: 24px minmax(0, 1fr);
+  gap: 7px; width: 100%; padding: 9px 11px; border: 0; text-align: left;
+  background: transparent; color: var(--ink); font: inherit; font-size: 13px;
+  line-height: 1.35;  }
+#rd-epub-nav nav > button span { color: var(--muted); text-align: right; font-size: 11px;
+  padding-top: 2px; }
+#rd-epub-nav nav > button:hover, #rd-epub-nav nav > button.current {
+  background: color-mix(in srgb, var(--accent) 10%, transparent); }
+#rd-epub-nav nav > button.current { color: var(--accent); font-weight: 650;
+  box-shadow: inset 3px 0 var(--accent); }
+.rd-bookmarks { padding: 6px 13px 13px; box-sizing: border-box; }
+.rd-bookmark-add { display: grid; grid-template-columns: minmax(0, 1fr) 38px;
+  gap: 7px; padding-bottom: 12px;
+  border-bottom: 1px solid var(--line); }
+.rd-bookmark-add input { width: 100%; min-width: 0; box-sizing: border-box;
+  height: 38px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 9px;
+  background: color-mix(in srgb, var(--card) 76%, var(--bg)); color: var(--ink);
+  font: inherit; font-size: 12px; outline: none; }
+.rd-bookmark-add input:focus { border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 13%, transparent); }
+.rd-bookmark-save { display: grid; place-items: center; width: 38px; height: 38px;
+  padding: 9px; border: 1px solid var(--accent); border-radius: 9px;
+  background: var(--accent); color: #17130a; 
+  box-shadow: 0 3px 10px color-mix(in srgb, var(--accent) 24%, transparent); }
+.rd-bookmark-save:hover { filter: brightness(1.08); }
+.rd-bookmark-save svg { width: 18px; height: 18px; fill: none; stroke: currentColor;
+  stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.rd-bookmark-list { display: grid; gap: 8px; padding: 10px 0; }
+.rd-bookmark { display: grid; grid-template-columns: minmax(0, 1fr) 30px;
+  align-items: center; min-height: 66px; overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--line) 88%, transparent);
+  border-left: 3px solid var(--accent); border-radius: 11px;
+  background: color-mix(in srgb, var(--card) 72%, var(--bg));
+  box-shadow: 0 3px 10px rgba(0,0,0,.12);
+  transition: border-color .16s ease, background .16s ease, box-shadow .16s ease,
+    transform .16s ease; }
+.rd-bookmark:hover { border-color: color-mix(in srgb, var(--accent) 42%, var(--line));
+  background: color-mix(in srgb, var(--accent) 7%, var(--card));
+  box-shadow: 0 6px 16px rgba(0,0,0,.2); transform: translateY(-1px); }
+.rd-bookmark-jump, .rd-bookmark-delete { border: 0; background: transparent;
+  color: var(--ink);  font: inherit; }
+.rd-bookmark-jump { min-width: 0; padding: 12px 10px; text-align: left; }
+.rd-bookmark-jump b, .rd-bookmark-jump span { display: block; overflow: hidden;
+  white-space: nowrap; text-overflow: ellipsis; }
+.rd-bookmark-jump b { font-size: 12.5px; }
+.rd-bookmark-jump span { display: table; margin-top: 6px; padding: 3px 7px;
+  border: 1px solid color-mix(in srgb, var(--line) 84%, transparent);
+  border-radius: 999px; background: color-mix(in srgb, var(--bg) 75%, transparent);
+  color: var(--muted); font-size: 10.5px; line-height: 1.2; }
+.rd-bookmark-delete { display: grid; place-items: center; width: 28px; height: 28px;
+  margin-right: 7px; border-radius: 7px; color: var(--muted); font-size: 18px;
+  transition: color .14s ease, background .14s ease; }
+.rd-bookmark-delete:hover { background: color-mix(in srgb, var(--ink) 8%, transparent); }
+.rd-bookmark-jump:hover, .rd-bookmark-delete:hover { color: var(--accent); }
+.rd-bookmark-empty { display: flex; flex-direction: column; align-items: center;
+  margin: 34px 10px 0; color: var(--muted); text-align: center; }
+.rd-bookmark-empty svg { width: 28px; height: 28px; margin-bottom: 10px;
+  fill: none; stroke: currentColor; stroke-width: 1.5; opacity: .6; }
+.rd-bookmark-empty b { color: var(--ink); font-size: 13px; font-weight: 650; }
+.rd-bookmark-empty span { max-width: 150px; margin-top: 4px; font-size: 11.5px;
+  line-height: 1.45; }
+@media (max-width: 760px) {
+  .pf-reader-layout.side-open { grid-template-columns: 220px minmax(0, 1fr); }
+  .pf-thumb-paper, .pf-thumb canvas { width: 102px; }
+  .rd-epub-layout.side-open { grid-template-columns: 210px minmax(0, 1fr); }
+}
+.pf-page { position: relative; margin: 0 auto 18px; background: #fff;
+  box-shadow: 0 1px 3px rgba(0,0,0,.3), 0 12px 34px rgba(0,0,0,.32);
+  overflow: hidden; }
+.pf-page canvas { display: block; width: 100%; height: 100%; }
+.pf-page .pf-wait { position: absolute; inset: 0; display: flex;
+  align-items: center; justify-content: center; color: #b9b3a6;
+  font-size: 13px; }
+.pfat { color: var(--muted); font-size: 13.5px; white-space: nowrap; }
+.pfat input { font: inherit; font-size: 13.5px; width: 3.6em;
+  text-align: center; padding: 6px 4px; border-radius: 7px;
+  border: 1px solid var(--line); background: var(--card); color: var(--ink); }
+.pfzoom { display: inline-flex; gap: 4px; margin-left: auto; }
+
+/* Straight out of pdf.js's own viewer stylesheet: the spans have to sit
+   exactly over the glyphs they stand for, or a drag selects the wrong
+   words. */
+.textLayer { position: absolute; inset: 0; overflow: hidden;
+  line-height: 1; text-align: initial; text-size-adjust: none;
+  -webkit-text-size-adjust: none; forced-color-adjust: none;
+  transform-origin: 0 0; z-index: 2; opacity: 1; }
+.textLayer span, .textLayer br { color: transparent; position: absolute;
+  white-space: pre;  transform-origin: 0% 0%; }
+.textLayer span.markedContent { top: 0; height: 0; }
+.textLayer ::selection { background: rgba(63,132,255,.35); }
+.textLayer br::selection { color: transparent; }
+.textLayer .endOfContent { display: block; position: absolute;
+  inset: 100% 0 0; z-index: -1;  user-select: none; }
+/* The two readers share one strip: a thin line across the top that the
+   page runs under, not a panel sitting on it. Whatever belongs on the
+   right -- the zoom on a PDF, the chapter on a book -- is pushed there by
+   the spacer. */
+/* Stuck to the top of the frame it has room to breathe in: the page's 32px
+   inset is given back as the bar's own padding, and the background is pulled
+   out to the full width so it reads as a bar across the top rather than a
+   dark block floating in the middle of the column. Sticky at top:0 means
+   there is no gap above it once you scroll, so the gap is the padding. */
+.rdbar { display: flex; gap: 10px; align-items: center; flex-wrap: nowrap;
+  margin: 0 -32px 18px; position: sticky; top: 0; z-index: 6;
+  background: var(--card); padding: 13px 32px 13px;
+  border: 0; border-bottom: 1px solid var(--line); border-radius: 0;
+  box-shadow: 0 5px 12px -10px rgba(0,0,0,.7); }
+.rdbar > * { flex: 0 0 auto; }
+.rdbar .rdgap { flex: 1 1 auto; min-width: 8px; }
+.rdbar select { flex: 0 1 380px; min-width: 0; padding-top: 6px;
+  padding-bottom: 6px; }
+.rdbar .btn { padding-top: 6px; padding-bottom: 6px; }
+/* The chevron a select gets by default is tiny and jammed against the
+   edge, so it is drawn here with room to breathe. */
+.rdbar select { font: inherit; font-size: 14px; padding: 9px 40px 9px 13px;
+  border-radius: 9px; border: 1px solid var(--line); background: var(--card);
+  color: var(--ink); max-width: 420px; appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2216%22 height=%2216%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%238e9aa7%22 stroke-width=%222.4%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22m6 9 6 6 6-6%22/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 13px center;
+  background-size: 16px;  }
+.rdbar select:focus { outline: 0; border-color: var(--accent); }
+#rd-page { max-width: 44em; margin: 22px auto 60px; font-size: 17px;
+  line-height: 1.75; min-width: 0; box-sizing: border-box; }
+#rd-page img, #rd-page svg { max-width: 100%; height: auto; }
+#rd-page h1, #rd-page h2, #rd-page h3 { line-height: 1.25; }
+#rd-page p { margin: 0 0 1em; }
+/* Where one chapter ends and the next begins, when they are all on one
+   page. A rule and its number, so scrolling past one is noticeable. */
+.rdchap { margin: 2.2em 0 1em; padding-top: .9em; font-size: 13px;
+  font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+  color: var(--muted); border-top: 2px solid var(--line); }
+.rdchap:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
+body.paper .rdchap { color: #7c7460; border-top-color: #ded5c4; }
+#rd-page a { color: var(--accent); }
+/* Paper: a sheet with ink on it, the same whatever the app's theme, which
+   is the point of asking for paper. */
+/* The sheet grows with the window instead of holding a fixed 38em: on a wide
+   screen that was a ribbon of paper down the middle with the rest of the
+   window empty either side. It still stops short of a line too long to read
+   comfortably. */
+body.paper #rd-page { max-width: min(52em, 100%); margin: 26px auto 72px;
+  padding: 64px clamp(40px, 6.5%, 86px) 80px;
+  background: #fbf7ef; color: #221f19; border-radius: 3px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.3), 0 14px 40px rgba(0,0,0,.35),
+    0 0 0 1px rgba(0,0,0,.18);
+  font-size: 18.5px; line-height: 1.85; }
+body.paper #rd-page a { color: #8a5a12; }
+body.paper #rd-page h1, body.paper #rd-page h2,
+body.paper #rd-page h3, body.paper #rd-page h4 { color: #221f19; }
+body.paper #rd-page hr { border: 0; border-top: 1px solid #ded5c4; }
+body.paper #rd-page blockquote { color: #4a443a;
+  border-left: 3px solid #ded5c4; margin: 0 0 1em; padding-left: 1em; }
+
+/* EPUB controls belong to the contents panel, beside the sheets. */
+#rd-epub { position: relative; overflow-anchor: none; }
+.rd-epub-reopen { position: sticky; top: 12px; z-index: 7; margin: 0 0 -40px;
+  padding: 9px 13px; border: 1px solid var(--line); border-radius: 9px;
+  background: var(--card); color: var(--ink); font: inherit; 
+  box-shadow: 0 5px 18px rgba(0,0,0,.2); }
+.rd-epub-reopen[hidden], .rd-epub-page-turn[hidden] { display: none; }
+.rd-epub-controls { display: grid; gap: 10px; padding: 14px;
+  border-bottom: 1px solid var(--line); }
+.rd-epub-control-head { display: flex; align-items: center; justify-content: space-between; }
+.rd-reader-settings { position: relative; margin-left: auto; }
+.rd-reader-settings > summary { display: grid; place-items: center; width: 30px; height: 30px;
+  border: 1px solid var(--line); border-radius: 7px; color: var(--muted); cursor: pointer;
+  list-style: none; }
+.rd-reader-settings > summary::-webkit-details-marker { display: none; }
+.rd-reader-settings > summary span { font-family: "Segoe UI Symbol", sans-serif; font-size: 18px; line-height: 1; }
+.rd-reader-settings > summary:hover, .rd-reader-settings[open] > summary { color: var(--ink); background: var(--bg); }
+.rd-reader-settings-menu { position: absolute; top: calc(100% + 7px); right: 0; z-index: 20;
+  display: grid; gap: 10px; box-sizing: border-box; width: 200px; padding: 12px; border: 1px solid var(--line);
+  border-radius: 10px; background: var(--card); box-shadow: 0 10px 28px rgba(0,0,0,.28); }
+.rd-reader-settings-menu > span { color: var(--muted); font-size: 11px; }
+.rd-reader-settings-menu .rd-epub-mode { box-sizing: border-box; white-space: nowrap; }
+.rd-reader-settings-menu .rd-script-control { display: grid; justify-content: stretch; }
+.rd-reader-settings-menu .rd-script-toggle { width: max-content; }
+.rd-epub-control-head strong { font-size: 14px; }
+.rd-epub-control-head button { display: grid; place-items: center; width: 26px; height: 26px; border: 0;
+  border-radius: 6px; background: transparent; color: var(--muted);
+  font: inherit; font-size: 22px; line-height: 1;  }
+.rd-epub-control-head button svg { width: 17px; height: 17px; fill: none; stroke: currentColor;
+  stroke-width: 1.8; stroke-linecap: round; }
+.rd-epub-control-head button:hover { background: var(--bg); color: var(--ink); }
+.rd-epub-controls label { color: var(--muted); font-size: 11px; }
+.rd-epub-controls select { min-width: 0; width: 100%; height: 36px; padding: 0 9px;
+  border: 1px solid var(--line); border-radius: 8px; background: var(--bg);
+  color: var(--ink); font: inherit; font-size: 12px; }
+.rd-epub-page-turn { display: grid; grid-template-columns: 36px 1fr 36px;
+  gap: 4px; align-items: center; text-align: center; }
+.rd-epub-page-turn button, .rd-epub-mode { height: 34px; border: 1px solid var(--line);
+  border-radius: 8px; background: var(--bg); color: var(--ink);
+  font: inherit;  }
+.rd-epub-page-turn button { display: grid; place-items: center; padding: 0;
+  font-size: 22px; line-height: 1; }
+.rd-epub-page-turn button:disabled { opacity: .35;  }
+.rd-epub-page-turn span, .rd-epub-progress { color: var(--muted); font-size: 11px; }
+.rd-epub-mode { width: 100%; font-size: 12px; }
+.rd-epub-page-jump { display: grid; gap: 5px; }
+.rd-epub-page-jump > div { display: flex; gap: 6px; }
+.rd-epub-page-jump input { width: 100%; min-width: 0; height: 34px; box-sizing: border-box; border: 1px solid var(--line); border-radius: 7px; padding: 0 8px; background: var(--bg); color: var(--ink); font: inherit; }
+.rd-epub-page-jump button { border: 1px solid var(--line); border-radius: 7px; padding: 0 12px; background: var(--bg); color: var(--ink); font: inherit; }
+.rd-epub-page-jump button:disabled { opacity: .35; }
+.rd-epub-mode:hover, .rd-epub-page-turn button:hover:not(:disabled) {
+  border-color: var(--accent); }
+.rd-script-control { display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; color: var(--muted); font-size: 11px; }
+.rd-script-toggle { display: grid; grid-template-columns: 1fr 1fr; gap: 2px;
+  padding: 3px; border: 1px solid var(--line); border-radius: 9px;
+  background: color-mix(in srgb, var(--bg) 76%, var(--card)); }
+.rd-script-toggle button { min-width: 64px; height: 29px; padding: 0 9px;
+  border: 0; border-radius: 6px; background: transparent; color: var(--muted);
+  font: inherit; font-size: 12px; font-weight: 600;  }
+.rd-script-toggle button[aria-pressed="true"] { background: var(--card); color: var(--ink);
+  box-shadow: 0 1px 4px rgba(0,0,0,.18); }
+.rd-script-toggle button:hover { color: var(--ink); }
+#rd-epub-nav > .rd-history { padding: 7px 10px; border-bottom: 1px solid var(--line); }
+
+/* Each EPUB page has its own edge in both reading modes. */
+#rd-page { position: relative; width: var(--rd-page-width, 100%); max-width: min(52em, 100%); margin: 0 auto 72px; }
+.rd-epub-index { position: absolute; top: 0; left: 0; width: 100%; height: 0; overflow: hidden; visibility: hidden; pointer-events: none; }
+#rd-page .rd-epub-chapter { position: relative; }
+#rd-page .rd-epub-sheet { box-sizing: border-box; height: var(--rd-sheet-height, max(560px, calc(100vh - 40px)));
+  margin: 0 0 22px; padding: 58px clamp(32px, 6.5%, 86px) 72px;
+  overflow: hidden; background: var(--card); border-radius: 3px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.3), 0 14px 40px rgba(0,0,0,.28); }
+#rd-page .rd-epub-sheet[hidden] { display: none; }
+#rd-page .rd-epub-sheet.rd-epub-oversize { height: auto; min-height: var(--rd-sheet-height, max(560px, calc(100vh - 40px)));
+  overflow: visible; }
+#rd-page .rd-epub-measure { position: absolute; inset: 0 auto auto 0;
+  box-sizing: border-box; width: 100%; padding: 58px clamp(32px, 6.5%, 86px) 72px;
+  visibility: hidden; pointer-events: none; }
+body.paper #rd-page { padding: 0; background: none; box-shadow: none;
+  color: #221f19; border-radius: 0; }
+body.paper #rd-page .rd-epub-sheet { background: #fbf7ef;
+  box-shadow: 0 1px 3px rgba(0,0,0,.3), 0 14px 40px rgba(0,0,0,.35),
+    0 0 0 1px rgba(0,0,0,.18); }
+.rd-find { position:fixed; inset:8px 10px auto auto; z-index:40; display:flex; align-items:center; gap:4px; max-width:calc(100% - 20px); padding:5px; border:1px solid var(--line); border-radius:8px; background:var(--card); box-shadow:0 5px 18px #0004; }
+.rd-find input { width:160px; min-width:55px; padding:5px 7px; }
+.rd-find output { padding:0 4px; color:var(--muted); font-size:12px; white-space:nowrap; }
+.rd-find button { display:grid; place-items:center; flex:none; width:27px; height:27px; padding:0; border:0; border-radius:4px; background:transparent; color:var(--ink); cursor:pointer; }
+.rd-find button:hover:not(:disabled) { background:var(--line); }
+.rd-find button:disabled { opacity:.4; cursor:default; }
+::highlight(reader-find) { background:#ffbc2399; }

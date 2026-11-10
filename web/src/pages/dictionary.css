@@ -1,0 +1,464 @@
+/* Lifted out of DICT_BODY in dictpage.py, not retyped.
+   The dictionary carries its own look: the tabs, the panes, the stroke
+   boxes, the character grid and the etymology tree. What it does not
+   define comes from hub.css and the libraries' own stylesheets. */
+
+/* Only drawn on a copy of this page that a script popped open of its own --
+   see the window.opener check in Dictionary.tsx -- so the ordinary in-app
+   tab never grows a second, redundant way to close it. */
+.d-close {
+  position: fixed; top: 14px; right: 16px; z-index: 50;
+  width: 30px; height: 30px; border-radius: 999px;
+  border: 1px solid var(--line); background: var(--card); color: var(--muted);
+  font-size: 19px; line-height: 1; 
+  display: flex; align-items: center; justify-content: center;
+}
+.d-close:hover { border-color: var(--accent); color: var(--ink); }
+/* NOT BLUE. --yb-link was web-link blue in both schemes, and nearly
+   everything it touches is text you read rather than a page you leave
+   for: the components under Character Structure, the phonetic-role chip,
+   the pinyin beside a stroke-order definition. Blue there reads as
+   hypertext and makes the panel look like a page of search results. It
+   is the app's own amber now, deep enough to carry on white and bright
+   enough on the night colours, so one token moves every place that used
+   it and the two schemes stay in step. */
+/* The reference panel's palette. Light is the YellowBridge look; dark is
+   the same furniture on the app's night colours. */
+:root { --yb-pane:#fff; --yb-ink:#111; --yb-bd:#b5b5b5; --yb-bd-soft:#ddd;
+  --yb-frame:#bbb; --yb-zebra:#f4f4f4; --yb-lbl:#E6ECFB;
+  --yb-cream:#fdf8e0; --yb-cream-deep:#f4efd8; --yb-cream-bd:#e6dcae;
+  --yb-chip:#ececec; --yb-chiptext:#333; --yb-btn:#fff;
+  --yb-link:#9a6a00; --yb-quiet:#666; --yb-dim:#555; --yb-faint:#777;
+  --yb-tree:#b0b0b0; --yb-icon:#222;
+  --yb-shadow: 0 1px 2px rgba(0,0,0,.05), 0 5px 14px rgba(0,0,0,.06); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --yb-pane:#171c22; --yb-ink:#e9edf1; --yb-bd:#39424d;
+  --yb-bd-soft:#2a323b; --yb-frame:#39424d; --yb-zebra:#1d232b;
+  --yb-lbl:#223049; --yb-chip:#232a33; --yb-chiptext:#cfd6dd;
+  --yb-btn:#232a33; --yb-link:#f0b429; --yb-quiet:#9aa6b2;
+  --yb-dim:#aab4be; --yb-faint:#8a95a1; --yb-tree:#4a5460;
+  --yb-icon:#cfd6dd; } }
+:root[data-theme="dark"] {
+  --yb-pane:#171c22; --yb-ink:#e9edf1; --yb-bd:#39424d;
+  --yb-bd-soft:#2a323b; --yb-frame:#39424d; --yb-zebra:#1d232b;
+  --yb-lbl:#223049; --yb-chip:#232a33; --yb-chiptext:#cfd6dd;
+  --yb-btn:#232a33; --yb-link:#f0b429; --yb-quiet:#9aa6b2;
+  --yb-dim:#aab4be; --yb-faint:#8a95a1; --yb-tree:#4a5460;
+  --yb-icon:#cfd6dd; }
+/* The search field and its own clear cross. The wrapper carries the sizing
+   the input used to: never squeezed narrower than the placeholder, because in
+   a split pane the field shrank to its automatic minimum and the prompt was
+   cut off mid-word. Below that width the row wraps the button to the next
+   line instead. */
+.d-qwrap { position: relative; display: flex; flex: 1 1 280px;
+  min-width: min(100%, 360px); max-width: 460px; }
+/* `max-width: none` because `.searchbar input` holds every field in this bar
+   to 430px, and this one is inside a 460px wrapper -- left capped, the input
+   stopped 30px short of the wrapper and the cross, pinned to the wrapper's
+   right edge, hung outside the field. The width the field is allowed is the
+   wrapper's business now; it was an inline style on the input before. */
+/* .fv-q is the favourites page's search box, which is this same field. */
+#d-q, .fv-q { flex: 1 1 auto; width: 100%; max-width: none; font: inherit;
+  font-size: 17px;
+  /* Room at the right end for the cross to sit in without meeting the text. */
+  padding: 10px 42px 10px 14px;
+  border: 1px solid var(--line); border-radius: 9px; }
+/* Ours replaces it, so the browser's must go -- two crosses in one field
+   otherwise, and only the smaller one would have the wrong cursor. */
+#d-q::-webkit-search-cancel-button,
+.fv-q::-webkit-search-cancel-button { display: none; }
+/* The hit target is the full height of the field and 40px across; the cross
+   drawn inside it stays 13px. That is the whole point: a bigger target, not
+   a bigger cross. */
+.d-clearq { position: absolute; right: 0; top: 0; height: 100%; width: 40px;
+  display: flex; align-items: center; justify-content: center;
+  background: none; border: 0; padding: 0; margin: 0;
+   color: var(--muted); border-radius: 0 9px 9px 0; }
+.d-clearq:hover { color: var(--ink); }
+.d-clearq svg { width: 13px; height: 13px; display: block; }
+/* Nothing to clear, nothing to press. `:placeholder-shown` is true exactly
+   when the field is empty, however it came to be empty. */
+#d-q:placeholder-shown ~ .d-clearq,
+.fv-q:placeholder-shown ~ .d-clearq { display: none; }
+#d-q, .fv-q { background: var(--card); color: var(--ink); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) #d-q,
+  :root:not([data-theme="light"]) .fv-q {
+  background: #242c36; border-color: #3d4754; } }
+:root[data-theme="dark"] #d-q,
+:root[data-theme="dark"] .fv-q { background: #242c36; border-color: #3d4754; }
+/* Dark tables drop the zebra: every row wears the stripe colour, with a
+   breath of pane showing between rows. Light keeps the YellowBridge look. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .ybtable { border-collapse: separate;
+    border-spacing: 0; }
+  :root:not([data-theme="light"]) .ybtable td {
+    border-top: 5px solid var(--yb-pane); }
+  :root:not([data-theme="light"]) .ybtable tr:first-child td {
+    border-top: 0; }
+  :root:not([data-theme="light"]) .ybtable td:not(.lbl) {
+    background: var(--yb-pane); }
+  :root:not([data-theme="light"]) .ybtable tr:nth-child(even) td:not(.lbl) {
+    background: var(--yb-zebra); }
+  :root:not([data-theme="light"]) .ety-tree .trow {
+    background: var(--yb-zebra); margin: 5px 0; }
+}
+:root[data-theme="dark"] .ybtable { border-collapse: separate;
+  border-spacing: 0; }
+:root[data-theme="dark"] .ybtable td {
+  border-top: 5px solid var(--yb-pane); }
+:root[data-theme="dark"] .ybtable tr:first-child td { border-top: 0; }
+:root[data-theme="dark"] .ybtable td:not(.lbl) {
+  background: var(--yb-pane); }
+:root[data-theme="dark"] .ybtable tr:nth-child(even) td:not(.lbl) {
+  background: var(--yb-zebra); }
+:root[data-theme="dark"] .ety-tree .trow {
+  background: var(--yb-zebra); margin: 5px 0; }
+.quiet { color: var(--muted); font-size: 13px; }
+.script-toggle { display: inline-flex; border: 1px solid var(--line);
+  border-radius: 9px; overflow: hidden; }
+.script-toggle button { appearance: none; font: inherit;
+  font-size: 13.5px; font-weight: 600; 
+  color: var(--muted); background: var(--card); border: 0;
+  padding: 9px 13px; line-height: 1; }
+.script-toggle button + button { border-left: 1px solid var(--line); }
+.script-toggle button.here { background: #fdbc1e; color: #000;
+   }
+/* The ways to the frequency list and the favourites, beside the script
+   switcher. Each is drawn as one of
+   that pair rather than as a third state of it -- it does not switch
+   anything, it goes somewhere -- so it keeps their size and weight and its
+   own border. */
+.d-ranks { display: inline-flex; align-items: center;
+  font-size: 13.5px; font-weight: 600; line-height: 1;
+  padding: 9px 13px; border-radius: 9px;
+  border: 1px solid var(--line); background: var(--card);
+  color: var(--muted); text-decoration: none; }
+.d-ranks:hover { border-color: #fdbc1e; color: var(--ink); }
+/* Folder tabs over the reference panel. */
+.dtabs { display: flex; gap: 3px; flex-wrap: wrap; align-items: flex-end;
+  border-bottom: 3px solid #fdbc1e; }
+.dtabs button { appearance: none; font: inherit; font-size: 14.5px;
+  font-weight: 600;  color: var(--yb-chiptext);
+  background: var(--yb-chip);
+  border: 1px solid var(--yb-bd); border-bottom: 0;
+  border-radius: 8px 8px 0 0; padding: 8px 14px; line-height: 1; }
+.dtabs button.here { background: #fdbc1e; color: #000; font-weight: 800;
+  border-color: #fdbc1e; }
+.dtabs button .zh { color: var(--yb-quiet); font-weight: 400;
+  margin-right: 3px; }
+.dtabs button.here .zh { color: #000; }
+.dpane { background: var(--yb-pane); color: var(--yb-ink);
+  border: 1px solid var(--yb-bd);
+  border-top: 0; border-radius: 0 0 10px 10px; padding: 18px;
+  margin-bottom: 26px; }
+.dpane .ybsec { max-width: 760px; }
+#pane-strokes .ybsec { max-width: none; }
+.chpager { display: flex; gap: 6px; flex-wrap: wrap; margin: 0 0 14px; }
+.chpager button { appearance: none; font: inherit; font-size: 27px;
+   background: var(--yb-chip); color: var(--yb-ink);
+  border: 1px solid var(--yb-bd); border-radius: 9px; padding: 8px 17px;
+  line-height: 1; }
+.chpager button.here { background: #fdbc1e; border-color: #fdbc1e;
+  color: #000; font-weight: 700; }
+.hwbox { position: relative; }
+/* The star in the headword box's corner: this word, at this reading, in the
+   favourites or not. The box is cream in both schemes, so the star's colours
+   are fixed rather than tokens. While it carries one the box is padded evenly
+   on both sides, so a long word stays centred and never runs under it. */
+.hwbox.has-star { padding-left: 46px; padding-right: 46px; }
+.d-star { position: absolute; top: 8px; right: 8px; width: 34px; height: 34px;
+  display: flex; align-items: center; justify-content: center;
+  appearance: none; background: none; border: 0; padding: 0; margin: 0;
+  border-radius: 8px;  color: #a89a66; }
+.d-star svg { width: 23px; height: 23px; display: block; }
+.d-star svg path { fill: none; stroke: currentColor; stroke-width: 1.8;
+  stroke-linejoin: round; }
+.d-star:hover { color: #6f6130; background: rgba(0,0,0,.05); }
+.d-star.on svg path { fill: #fdbc1e; stroke: #c99400; }
+.hw-toggle { display: flex; border-top: 1px solid var(--yb-cream-bd); }
+.hw-toggle button { flex: 1; appearance: none; font: inherit;
+  font-size: 13.5px; font-weight: 600;  padding: 8px 4px;
+  background: var(--yb-cream-deep); color: #555; border: 0;
+  line-height: 1; }
+.hw-toggle button + button { border-left: 1px solid var(--yb-cream-bd); }
+.hw-toggle button.here { background: #fdbc1e; color: #000;
+   }
+.mini-strokes { display: flex; gap: 10px; flex-wrap: wrap;
+  justify-content: center; padding: 12px 10px; }
+.sk-cell.mini-cell { width: 110px; height: 110px;  }
+.mini-pager { padding: 10px 10px 0; margin: 0;
+  justify-content: center; }
+.mini-pager button { font-size: 16px; padding: 4px 10px; }
+.dpane a.zh-link { color: var(--yb-ink); font-weight: 400; }
+.yb-legend { display: flex; gap: 12px 22px; flex-wrap: wrap;
+  align-items: center; border-top: 1px solid var(--yb-bd-soft);
+  margin-top: 10px;
+  padding: 10px 12px; font-size: 13.5px; color: var(--yb-dim); }
+.yb-legend-scope { flex: 0 0 100%; line-height: 1.45; }
+.yb-legend .lg-item { display: inline-flex; align-items: center; gap: 6px; }
+/* The layout symbol wears a small gold chip, so it never reads as one
+   of the characters beside it. */
+.idc { display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid #d9a512; border-radius: 5px; padding: 2px 3px;
+  margin-right: 7px; vertical-align: middle;
+  background: color-mix(in srgb, #fdbc1e 14%, transparent); }
+.idc .idcicon { width: 16px; height: 16px; display: block;
+  color: var(--yb-icon); }
+.role { font-size: 10.5px; font-weight: 700; letter-spacing: .04em;
+  text-transform: uppercase; border: 1px solid; border-radius: 4px;
+  padding: 1px 5px; margin-left: 7px; vertical-align: 1px; }
+.role-radical { color: #c8362f; border-color: #c8362f; }
+.role-meaning { color: #1a7f45; border-color: #1a7f45; }
+.role-sound { color: var(--yb-link); border-color: var(--yb-link); }
+.role-iconic { color: #1a7f45; border-color: #1a7f45; }
+/* The fold arrows. Sized on their own rather than inheriting the row: at the
+   body's size a ▸ is a few pixels of glyph with most of its em box empty, so
+   the thing you have to hit to open a branch was smaller than the text beside
+   it and hard to see at all against the rail. Line-height 1 and middle
+   alignment keep the taller glyph from pushing the row open. */
+.ety-tree .tg { display: inline-block; width: 22px;
+  font-size: 20px; line-height: 1; vertical-align: middle;
+  color: var(--yb-faint); text-align: center; }
+.ety-tree .tg.has {  color: var(--yb-dim); }
+.ety-tree .tg.has:hover { color: var(--yb-link); }
+.ety-tree li.closed > ul { display: none; }
+.dpane:empty { display: none; }
+#d-tabs[hidden] ~ .dpane { border-top: 1px solid var(--yb-bd);
+  border-radius: 10px; }
+.dpane a { color: var(--yb-link); text-decoration: none; font-weight: 600; }
+.dpane .quiet { color: var(--yb-quiet); }
+/* Sections with the golden header strip. */
+/* A card rather than a box: rounded, lifted a little off the page. No
+   overflow:hidden -- a wide table inside has to be able to scroll -- so
+   the corners are cut on the header and the last row instead. */
+.ybsec { border: 1px solid var(--yb-frame); margin: 0 0 18px;
+  background: var(--yb-pane); border-radius: 12px;
+  box-shadow: var(--yb-shadow); }
+.ybhead { background: #fdbc1e; color: #000; font-weight: 700;
+  text-align: center; padding: 6px 10px; font-size: 15px;
+  border-radius: 11px 11px 0 0; }
+.ybtable { width: 100%; border-collapse: collapse; }
+.ybtable td { border-top: 1px solid var(--yb-bd-soft); padding: 8px 12px;
+  vertical-align: top; font-size: 16.5px; }
+.ybtable tr:first-child td { border-top: 0; }
+/* Alternating whole rows, the way YellowBridge does it: the label column
+   takes the row's colour instead of being a block of its own, so the eye
+   follows a row across rather than down a coloured gutter. */
+.ybtable tr:nth-child(even) td { background: var(--yb-zebra); }
+.ybtable td.lbl { font-weight: 700; width: 148px; white-space: nowrap;
+  border-right: 1px solid var(--yb-bd-soft); }
+/* The last row has to round off with the card around it. */
+.ybtable tr:last-child td:first-child { border-bottom-left-radius: 11px; }
+.ybtable tr:last-child td:last-child { border-bottom-right-radius: 11px; }
+.word-part + .word-part { border-top: 2px solid var(--yb-frame); }
+.word-part-heading { display: flex; align-items: baseline; gap: 10px;
+  padding: 10px 12px 6px; font-weight: 700; }
+.word-part-character { font-size: 22px; }
+.word-part-character a.zh-link { font-weight: 700; }
+.word-part-reading { color: var(--yb-dim); font-size: 12px; font-weight: 500; }
+.word-part-entry { display: grid; grid-template-columns: 64px minmax(0, 1fr);
+  gap: 12px; padding: 8px 12px 10px; line-height: 1.4; }
+.word-part-entry + .word-part-entry { border-top: 1px solid var(--yb-bd-soft); }
+.word-part-entry:nth-child(even) { background: var(--yb-zebra); }
+.word-part-pinyin { color: var(--yb-dim); white-space: nowrap; }
+.word-part-definition { min-width: 0; overflow-wrap: anywhere; }
+.ybcols { display: flex; gap: 16px; align-items: flex-start;
+  flex-wrap: wrap; }
+.ybleft { flex: 0 0 auto; min-width: 300px;
+  max-width: min(560px, 100%); }
+/* Only the headword box grows with a long word; its neighbours hold
+   their width and wrap inside. */
+.ybleft > .ybsec { width: 300px; }
+.ybleft > .hw-sec { width: max-content; min-width: 300px;
+  max-width: min(560px, 100%); }
+.zhword a { white-space: nowrap; }
+.ybright { flex: 1 1 420px; min-width: 280px; }
+.ybright > .ybsec { max-width: 760px; margin: 0 0 16px; }
+/* Related-word cards vary wildly in height. A flex row made every card in
+   that row wait for the tallest one before the next row could start, leaving
+   a huge blank rectangle under short cards. Multi-column flow keeps each card
+   intact while filling the available vertical space column by column. */
+.relgrid { columns: 340px; column-gap: 16px; column-fill: balance; }
+.relgrid > .ybsec { display: block; width: 100%; max-width: none;
+  vertical-align: top; break-inside: avoid; margin: 0 0 16px; }
+.relgrid > .ybsec.wide { width: 100%; }
+.entry-table { table-layout: fixed; }
+.entry-table td { overflow-wrap: anywhere; }
+.entry-table td.entry-word { width: 44%; }
+.entry-table .zhword { white-space: nowrap; }
+.entry-table .zhword.long-word,
+.entry-table .zhword.long-word a { white-space: normal; }
+.entry-table .zhpy { white-space: normal; }
+/* The cream headword box -- cream in both themes, so its own text
+   colours are fixed too. */
+.hwbox { background: var(--yb-cream); color: #111; text-align: center;
+  padding: 20px 18px; }
+.hwbox .ch { font-size: 72px; line-height: 1.15; }
+.hwbox .ch a { color: #111; font-weight: 400; }
+.hwbox .py { font-size: 21px; color: #444; margin-top: 4px; }
+/* Through the token, not around it: written out as a literal, this one
+   survived the palette losing its blue and left the headword links blue
+   while everything around them had moved. */
+.dpane .hwbox a { color: var(--yb-link); }
+.hwbox .ch a { color: #111; }
+.zhword { font-size: 20px; }
+.bigzh { font-size: 28px; line-height: 1.3; }
+.zhword .trad { color: var(--yb-faint); }
+/* Pinyin stacked under the characters in the related-words cards. It
+   keeps to one line -- the word above never dictates its width. */
+/* Pinyin you can click: each syllable speaks on its own, and a speaker
+   fades in at the end of the run so it is clear the line is playable. */
+.pys {  }
+.pys:hover { text-decoration: underline; text-underline-offset: 2px; }
+.zhpy { color: var(--yb-dim); font-size: 15px; margin-top: 2px;
+  white-space: nowrap; }
+.ex-zh { font-size: 18px; }
+.ex-zh b { color: var(--yb-ink); }
+.ex-en { color: var(--yb-dim); display: block; margin-top: 2px; }
+/* Stroke order: white practice grid, blue strokes, a transport. */
+.sk-bar { display: flex; gap: 16px; flex-wrap: wrap; align-items: center;
+  padding: 10px 12px; }
+.sk-bar label { display: inline-flex; gap: 7px; align-items: center;
+   font-size: 14.5px; }
+.sk-bar input[type=radio] { accent-color: var(--yb-link); margin: 0; }
+.sk-speed { display: inline-flex; gap: 8px; align-items: center;
+  font-size: 14.5px; }
+.sk-speed input { accent-color: var(--yb-link); width: 130px; margin: 0; }
+.sk-boxes { display: flex; gap: 22px; flex-wrap: wrap; padding: 4px 12px 14px; }
+.sk-one { text-align: center; }
+.sk-cell { width: 220px; height: 220px; border: 1px solid #999;
+  background: #fff linear-gradient(to right,
+      transparent calc(50% - 0.5px), #e3e3e3 calc(50% - 0.5px),
+      #e3e3e3 calc(50% + 0.5px), transparent calc(50% + 0.5px));
+  background-image:
+    linear-gradient(to right, transparent calc(50% - 0.5px),
+      #e3e3e3 calc(50% - 0.5px), #e3e3e3 calc(50% + 0.5px),
+      transparent calc(50% + 0.5px)),
+    linear-gradient(to bottom, transparent calc(50% - 0.5px),
+      #e3e3e3 calc(50% - 0.5px), #e3e3e3 calc(50% + 0.5px),
+      transparent calc(50% + 0.5px)),
+    linear-gradient(to top right, transparent calc(50% - 0.5px),
+      #ececec calc(50% - 0.5px), #ececec calc(50% + 0.5px),
+      transparent calc(50% + 0.5px)),
+    linear-gradient(to bottom right, transparent calc(50% - 0.5px),
+      #ececec calc(50% - 0.5px), #ececec calc(50% + 0.5px),
+      transparent calc(50% + 0.5px)); }
+/* Wrapping because the transport is now four buttons and a count, which is
+   wider than the 150px box the compact stroke row draws. Left unwrapped that
+   row hangs out past its own square. */
+.sk-ctl { display: flex; gap: 8px; justify-content: center;
+  align-items: center; margin-top: 8px; flex-wrap: wrap; }
+.skbtn { appearance: none;  background: var(--yb-btn);
+  border: 1px solid var(--yb-bd); border-radius: 8px;
+  color: var(--yb-chiptext);
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 34px; min-height: 30px; padding: 4px; line-height: 1; }
+/* The button is what gets pressed, never the drawing inside it: an icon
+   swapped between the press and the release used to eat the click. See
+   paint() in dict/page.ts. */
+.skbtn svg { display: block; width: 16px; height: 16px; pointer-events: none; }
+.skbtn[aria-pressed="true"] { background: #fdbc1e; color: #111; }
+.sk-repeat-all { padding: 6px 10px; font: inherit; font-size: 13px; }
+.sk-count { font-size: 13px; color: var(--yb-quiet); min-width: 3em; }
+/* This character's radical, counts and structure, under this character.
+
+   Held to the width of the square above it, so a column is one character
+   from top to bottom: the box, the transport, what it says and means, then
+   this. Two players side by side stay two readable columns instead of one
+   table spanning both and having to be matched back up by position.
+
+   The label column is a little narrower than the shared 148px, and 140 is
+   what the page was measured at rather than what the arithmetic said: the
+   text of "Kangxi Radical" plus its padding comes to 133, and at 133 it
+   still takes two lines, because a fraction of a pixel either way decides
+   it. 140 is the first width at which every label here is one line. Below
+   that the table gains a line for nothing -- the values are a radical, a
+   number and a decomposition, none of which wants the room. Smaller type
+   for the same reason: this is a caption to a drawing, not a page. */
+/* Flush with the square's left edge, not centred under it. The column is a
+   little wider than the square -- the transport and the definitions set that
+   -- so centring the table left it five pixels to the right of the box it
+   belongs to, which reads as a mistake at every size. */
+.sk-facts { width: 220px; max-width: 100%; margin: 10px 0 0;
+  text-align: left; }
+/* `table-layout: fixed` because a width on a cell is only a hint to the
+   automatic layout, which weighs it against what the cells hold and hands
+   the label column back to the values -- so the column kept coming out under
+   its 133 and "Kangxi Radical" wrapped anyway. Fixed takes the widths from
+   the first row and means them. */
+.sk-facts .ybtable { font-size: 13px; border-radius: 10px; overflow: hidden;
+  border: 1px solid var(--yb-bd-soft); table-layout: fixed; }
+.sk-facts .ybtable td { padding: 6px 9px; }
+.sk-facts .ybtable td.lbl { width: 140px; white-space: normal; }
+/* The compact stroke facts need a complete grid on the light palette. */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) .sk-facts .ybtable {
+    border-collapse: separate; border-spacing: 0; border-color: #aeb7c0; }
+  :root:not([data-theme="dark"]) .sk-facts .ybtable td {
+    border-top-color: #b8c1ca; }
+  :root:not([data-theme="dark"]) .sk-facts .ybtable td.lbl {
+    border-right-color: #b8c1ca; }
+}
+:root[data-theme="light"] .sk-facts .ybtable {
+  border-collapse: separate; border-spacing: 0; border-color: #aeb7c0; }
+:root[data-theme="light"] .sk-facts .ybtable td {
+  border-top-color: #b8c1ca; }
+:root[data-theme="light"] .sk-facts .ybtable td.lbl {
+  border-right-color: #b8c1ca; }
+/* The character still reads as the character, even sitting in a cell. */
+.sk-facts .bigch { font-size: 22px; line-height: 1.2; }
+/* A reading in the label column is a reading, not a heading: it keeps the
+   pinyin colour rather than the bold dark-blue every other label wears. */
+.sk-facts .ybtable td.lbl .pyrun { font-weight: 400; }
+.sk-cap { margin-top: 6px; font-size: 15px; }
+.sk-cap .py { color: var(--yb-dim); margin-left: 6px; }
+.sk-def { margin-top: 5px; font-size: 13px; color: var(--yb-quiet);
+  max-width: 230px; text-align: left; }
+.sk-def div { padding: 2px 0; }
+.sk-def .py { color: var(--yb-link); margin-right: 2px; }
+/* The way back out of a chain of lookups. Following a character replaces
+   what is in the pane, so this is the only thing on screen that still knows
+   where you started. Sits above the tabs, quiet until there is a trail. */
+.dcrumbs { display: flex; flex-wrap: wrap; align-items: center;
+  gap: 2px 4px; margin: 0 0 12px; font-size: 15px; }
+.dcrumbs[hidden] { display: none; }
+.dcrumb { color: var(--yb-link); text-decoration: none; font-weight: 600;
+  padding: 3px 7px; border-radius: 7px; }
+.dcrumb:hover { background: var(--yb-zebra); text-decoration: underline; }
+/* Where you are is named, not offered: a link back to the page you are on is
+   a button that does nothing. */
+.dcrumb.here { color: var(--yb-dim); font-weight: 600;  }
+.dcrumb.here:hover { background: none; text-decoration: none; }
+.dcrumb-sep { color: var(--yb-faint); font-size: 14px; user-select: none; }
+
+/* Etymology decomposition tree. */
+.ety-tree { list-style: none; margin: 0; padding: 8px 12px; }
+/* The old-school explorer lines: a rail down, an elbow over to each
+   node, the rail stopping at the last child. */
+.ety-tree ul { list-style: none; margin: 0; padding: 0 0 0 14px; }
+.ety-tree ul > li { position: relative; padding-left: 20px; }
+.ety-tree ul > li::before { content: ""; position: absolute; left: 0;
+  top: 17px; width: 17px; border-top: 1px solid var(--yb-tree); }
+.ety-tree ul > li::after { content: ""; position: absolute; left: 0;
+  top: 0; bottom: 0; border-left: 1px solid var(--yb-tree); }
+.ety-tree ul > li:last-child::after { height: 17px; bottom: auto; }
+.ety-tree li { padding: 0; font-size: 17px; }
+.ety-tree .trow { padding: 5px 8px; border-radius: 5px; }
+.ety-tree .trow.alt { background: var(--yb-zebra); }
+.ety-tree a.zh-link { font-size: 21px; }
+.ety-tree .idc { color: var(--yb-faint); margin-right: 5px; }
+.ety-tree .tpy { color: var(--yb-quiet); margin: 0 7px;
+  font-size: 15.5px; }
+.ety-tree .tree-missing { color: var(--yb-quiet); margin-left: 8px;
+  font-size: 14px; }
+.formtext { padding: 2px 0; }
+.form-list { margin: 0; padding-left: 22px; }
+.form-list li { padding: 3px 0; }
+.recentnav { display: flex; gap: 12px; align-items: center;
+  padding: 9px 12px; border-top: 1px solid var(--yb-bd-soft); }
+.recentnav button { appearance: none; font: inherit; font-size: 13.5px;
+   background: var(--yb-btn);
+  border: 1px solid var(--yb-bd);
+  border-radius: 8px; color: var(--yb-chiptext); padding: 5px 11px;
+  line-height: 1; }
+.recentnav button:disabled { opacity: .4;  }

@@ -1,0 +1,69 @@
+/* The favourites. The table is the dictionary's own -- .ybsec, .ybhead and
+   .ybtable, from dictionary.css -- so a starred word reads the way it did in
+   the results it was found in. What is here is only what that table never
+   needed: a sort control over it, a date, and a star on each row to take off. */
+
+/* The search box and the sort, on one row until the width runs out -- the
+   same arrangement as the dictionary's own bar. */
+.fv-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 0 0 16px;
+}
+.fv-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.fv-bar-label {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.fv {
+  max-width: 1000px;
+}
+.fv a.zh-link {
+  color: var(--yb-ink);
+  font-weight: 400;
+  text-decoration: none;
+}
+.fv a.zh-link:hover {
+  color: var(--yb-link);
+}
+.fv-word {
+  white-space: nowrap;
+}
+.fv-py {
+  color: var(--yb-dim);
+}
+.fv-at {
+  color: var(--yb-quiet);
+  font-size: 13.5px;
+  white-space: nowrap;
+}
+.fv-off {
+  width: 1%;
+  text-align: right;
+}
+.fv-star {
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 3px;
+  margin: 0;
+  
+  color: #fdbc1e;
+  line-height: 0;
+  border-radius: 6px;
+}
+.fv-star svg {
+  width: 20px;
+  height: 20px;
+  display: block;
+}
+.fv-star:hover {
+  color: var(--yb-quiet);
+}

@@ -1,0 +1,1249 @@
+/* The strip across the top, and the pages under it.
+   Its colours are the app's own, kept as they are so the rewritten shell and
+   the library pages under it look like one thing. */
+
+:not(select):not([role="listbox"]):not([role="menu"]) { scrollbar-width: none; }
+:not(select):not([role="listbox"]):not([role="menu"])::-webkit-scrollbar {
+  display: none; width: 0; height: 0;
+}
+
+:root {
+  --tb-bg: #f4f5f7;
+  --tb-strip: #dfe3e9;
+  --tb-line: #c2c8d1;
+  --tb-ink: #14181c;
+  --tb-dim: #55606d;
+  /* A tab has to read as a tab: its own surface against the strip, a lighter
+     one under the pointer, and the brightest for the page you are on. They
+     used to be transparent on a strip almost the same colour, which left the
+     row looking like loose words rather than tabs. */
+  --tb-tab: #eef1f4;
+  --tb-tab-hover: #e4e8ee;
+  --tb-active: #fff;
+  --tb-gold: #d99e00;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --tb-bg: #0f1419;
+    --tb-strip: #12171d;
+    --tb-line: #2f3945;
+    --tb-ink: #e9edf1;
+    --tb-dim: #9aa6b3;
+    --tb-tab: #1d242c;
+    --tb-tab-hover: #262f39;
+    --tb-active: #313c49;
+    --tb-gold: #fdbc1e;
+  }
+}
+
+:root[data-theme="dark"] {
+  --tb-bg: #0f1419;
+  --tb-strip: #12171d;
+  --tb-line: #2f3945;
+  --tb-ink: #e9edf1;
+  --tb-dim: #9aa6b3;
+  --tb-tab: #1d242c;
+  --tb-tab-hover: #262f39;
+  --tb-active: #313c49;
+  --tb-gold: #fdbc1e;
+}
+
+/* Only the shell fills the window. Every page in the app is served the one
+   bundled stylesheet, so an unscoped rule here sized the hub pages' own root
+   to the viewport as well and left their content hanging out of it. */
+html:has(#strip),
+body.shell,
+#root:has(#strip) {
+  height: 100%;
+}
+
+html,
+body {
+  margin: 0;
+}
+
+body.shell {
+  background: var(--tb-bg);
+  color: var(--tb-ink);
+  font: 14px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+#root:has(#strip) {
+  display: flex;
+  flex-direction: column;
+}
+
+#strip {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: var(--tb-strip);
+  border-bottom: 1px solid var(--tb-line);
+  flex: 0 0 auto;
+  height: 46px;
+  padding: 0 8px 0 6px;
+}
+html.cc-tabbar-hidden #strip { display: none; }
+
+#hover-toggle { flex:none;border:1px solid var(--tb-line);border-radius:7px;padding:3px 8px;
+  background:transparent;color:var(--tb-dim);font:700 15px/1.2 system-ui; }
+#hover-toggle[aria-pressed="true"] { color:var(--tb-gold);border-color:var(--tb-gold); }
+#hover-toggle:hover { background:rgba(128,128,128,.16); }
+.tab-start-drop { position:sticky;left:0;z-index:5;flex:0 0 44px;box-sizing:border-box;align-self:stretch;display:flex;align-items:center;justify-content:center;background:var(--tb-strip);border:1px dashed var(--tb-dim);border-radius:6px;color:var(--tb-dim);font-size:11px;font-weight:700;pointer-events:none; }
+.tab-start-drop.active { border:2px solid var(--tb-gold);color:var(--tb-gold);background:var(--tb-active); }
+
+.desktop-fullscreen { display:inline-flex;align-items:center;justify-content:center;flex:none;width:30px;height:30px;padding:4px;border:1px solid var(--tb-line);border-radius:7px;background:transparent;color:var(--tb-dim); }
+.desktop-fullscreen:hover,.desktop-fullscreen[aria-pressed="true"] { color:var(--tb-gold);background:var(--tb-tab-hover); }
+
+/* The mark and the menu button are one control, not two things that happen to
+   be next to each other. */
+#badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  background: none;
+  
+  border-radius: 8px;
+}
+
+#badge:hover {
+  background: rgba(128, 128, 128, 0.18);
+}
+
+#badge .mk {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: var(--tb-gold);
+  color: #1a1205;
+  font-size: 15px;
+  line-height: 1;
+  font-weight: 700;
+}
+
+/* A hairline after the app's own controls, where the tabs begin. */
+#menu {
+  position: relative;
+  flex: 0 0 auto;
+  margin-right: 7px;
+}
+
+#menu::after {
+  content: "";
+  position: absolute;
+  right: -7px;
+  top: 5px;
+  bottom: 5px;
+  width: 1px;
+  background: var(--tb-line);
+}
+
+#menu .summary {
+  
+  font-size: 16px;
+  line-height: 1;
+  border: 0;
+  border-radius: 8px;
+  color: var(--tb-dim);
+  background: none;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#menu .summary:hover,
+#menu.open .summary {
+  color: var(--tb-ink);
+  background: rgba(128, 128, 128, 0.18);
+}
+
+#menu .scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+}
+
+/* Where you can go, ahead of what is already open. */
+/* Chrome, not text. Dragging across the strip or the ☰ list used to select
+   it like prose -- a menu smeared blue is nobody's idea of a menu -- and the
+   selection then sat there until something else was clicked. */
+#strip, #menu, #go, #tabs { user-select: none; -webkit-user-select: none; }
+/* The strip is not selectable so tab labels cannot be highlighted by a drag,
+   but its search field must remain a real text-editing surface. WebView2 uses
+   the input caret to place the Windows IME composition and candidate windows. */
+#strip input, #strip textarea, #strip [contenteditable="true"] {
+  user-select: text;
+  -webkit-user-select: text;
+}
+#go {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 8px);
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  min-width: 13em;
+  padding: 6px;
+  border-radius: 11px;
+  border: 1px solid var(--tb-line);
+  background: var(--tb-strip);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.36);
+}
+
+#go button {
+  justify-content: flex-start;
+  width: 100%;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  
+  white-space: nowrap;
+  padding: 5px 10px;
+  border: 0;
+  border-radius: 7px;
+  background: none;
+  color: var(--tb-dim);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+#go .gic {
+  font-size: 14px;
+  line-height: 1;
+}
+
+#go img.gic {
+  width: 15px;
+  height: 15px;
+  object-fit: contain;
+  border-radius: 3px;
+}
+
+#go button:hover {
+  color: var(--tb-ink);
+  background: rgba(128, 128, 128, 0.16);
+}
+
+
+
+/* ---- the tabs ---- */
+
+#tabs {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  flex: 0 1 auto;
+  min-width: 0;
+  height: 46px;
+  padding-top: 8px;
+}
+
+#tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  /* The old app's measurements. Tabs that shrank to 54px turned every
+     label into an ellipsis and three letters of a word. */
+  flex: 0 1 auto;
+  min-width: 108px;
+  max-width: 240px;
+  height: 34px;
+  padding: 0 10px 0 13px;
+  border: 1px solid var(--tb-line);
+  border-bottom: 0;
+  border-radius: 9px 9px 0 0;
+  background: var(--tb-tab);
+  color: var(--tb-dim);
+  font: inherit;
+  font-size: 12.5px;
+  
+  white-space: nowrap;
+}
+
+.tab:hover {
+  background: var(--tb-tab-hover);
+  color: var(--tb-ink);
+}
+
+/* The page you are on: the brightest surface in the row, and a gold line
+   along the top so it is obvious at a glance which tab is live. */
+.tab.on {
+  background: var(--tb-active);
+  color: var(--tb-ink);
+  font-weight: 600;
+  box-shadow: inset 0 2px 0 var(--tb-gold);
+}
+
+/* A tab that is on screen beside the active one: lit, but not the one with
+   focus. */
+.tab.sp {
+  background: color-mix(in srgb, var(--tb-active) 62%, var(--tb-tab));
+  color: var(--tb-ink);
+}
+
+.tab.grp {
+  border-bottom: 2px solid var(--tb-gold);
+  height: 36px;
+}
+
+.tab.on.grp {
+  box-shadow: inset 0 2px 0 var(--tb-gold);
+}
+
+.tab.drag {
+  opacity: 0.25;
+}
+
+/* The destination is a copy of the actual tab or group, in the row itself.
+   It takes up its future space and moves neighbours aside before release. */
+#tabs .drop-preview,
+#tabs .drop-preview-group {
+  pointer-events: none;
+  flex: 0 0 auto;
+  opacity: 0.72;
+  filter: saturate(0.8);
+}
+
+#tabs .drop-preview {
+  border: 1px dashed var(--tb-gold);
+  box-shadow: inset 0 2px 0 var(--tb-gold), 0 0 0 2px color-mix(in srgb, var(--tb-gold) 18%, transparent);
+}
+
+#tabs .drop-preview-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  outline: 1px dashed var(--tb-gold);
+  outline-offset: 2px;
+}
+
+#tabs .drop-preview-group .tab,
+#tabs .drop-preview-group .gchip {
+  flex: 0 0 auto;
+}
+
+.tab.drop-left::before,
+.tab.drop-right::before {
+  content: "";
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  width: 2px;
+  background: var(--tb-gold);
+}
+
+.tab.drop-left::before {
+  left: -1px;
+}
+
+.tab.drop-right::before {
+  right: -1px;
+}
+
+.tab .ic {
+  flex: 0 0 auto;
+  font-size: 15px;
+  line-height: 1;
+  width: 17px;
+  height: 17px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tab img.ic {
+  object-fit: contain;
+  border-radius: 3px;
+}
+
+/* THE LINE BOX HAS TO BE TALLER THAN THE LETTERS, or the ellipsis clips them.
+   `overflow: hidden` is here for text-overflow, and it clips in BOTH
+   directions -- so the descender of a y is only safe if the line box is
+   taller than the font's own box. Inheriting 1.4 left 1.5px of room at
+   12.5px and 0.7px at the 15.5px a Chinese label is set in, which is
+   sub-pixel and duly disappeared on Segoe UI Variable at fractional
+   scaling: the y in "Dictionary" was cut off along the bottom. */
+.tab .t {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.75;
+  flex: 1 1 auto;
+  text-align: left;
+}
+
+.verification-dot{display:inline-block;flex:0 0 auto;width:8px;height:8px;border-radius:50%;
+  background:#f1ae3d;box-shadow:0 0 0 2px rgba(241,174,61,.18)}
+
+/* A label that is Chinese is set bigger; one with a character or two in an
+   English title is not, or the line would jump about. */
+.tab .t.cjk {
+  font-size: 15.5px;
+  letter-spacing: 0.01em;
+  font-weight: 500;
+}
+
+.tab .sh {
+  flex: 0 0 auto;
+}
+
+.tab .x {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  color: inherit;
+  opacity: 0.65;
+}
+
+/* The drawing fills the button rather than sitting inside it. A smaller svg
+   centred in the circle left a 5.5px gap a side -- half pixels -- which put
+   its raster grid out of phase with the circle's and made a mathematically
+   centred cross look pushed into a corner. Same box, same grid, no gap to
+   round. */
+.tab .x svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.tab:hover .x,
+.tab.on .x {
+  opacity: 1;
+}
+
+.tab .x:hover {
+  background: rgba(128, 128, 128, 0.28);
+  color: var(--tb-ink);
+}
+
+/* Home is pinned: its icon is the whole tab, and it never leaves the first
+   slot. No label and no close button, so the minimum width the others need
+   for a readable name is width this one would only pad out. */
+.tab.pinned {
+  flex: 0 0 auto;
+  min-width: 0;
+  max-width: none;
+  padding: 0 11px;
+  gap: 0;
+}
+
+/* The row's own rules are more specific than the browser's [hidden], so it
+   is said again here. */
+#strip .nav[hidden] {
+  display: none;
+}
+
+#strip .nav {
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: 50%;
+  
+  background: none;
+  color: var(--tb-dim);
+  font-size: 17px;
+  line-height: 1;
+}
+
+#strip .nav:hover {
+  color: var(--tb-ink);
+  background: rgba(128, 128, 128, 0.18);
+}
+
+#plus {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 8px;
+  
+  background: none;
+  color: var(--tb-dim);
+  font-size: 18px;
+  line-height: 1;
+}
+
+#plus:hover {
+  color: var(--tb-ink);
+  background: rgba(128, 128, 128, 0.18);
+}
+
+#fill {
+  flex: 1 1 auto;
+}
+
+/* ---- search, volume, theme: one cluster at the end of the row ---- */
+
+#find {
+  flex: 0 0 auto;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+#find .mag {
+  position: absolute;
+  left: 11px;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  margin-top: -7px;
+  color: var(--tb-dim);
+  pointer-events: none;
+}
+
+#find input {
+  font: inherit;
+  font-size: 13px;
+  width: 230px;
+  height: 30px;
+  box-sizing: border-box;
+  padding: 0 12px 0 31px;
+  border-radius: 999px;
+  border: 1px solid var(--tb-line);
+  background: var(--tb-bg);
+  color: var(--tb-ink);
+  transition: border-color 0.12s, box-shadow 0.12s, background 0.12s;
+}
+
+#find input::placeholder {
+  color: var(--tb-dim);
+}
+
+#find input:hover {
+  border-color: color-mix(in srgb, var(--tb-gold) 45%, var(--tb-line));
+}
+
+#find input:focus {
+  outline: 0;
+  border-color: var(--tb-gold);
+  background: var(--tb-active);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--tb-gold) 22%, transparent);
+}
+
+#volwrap {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 30px;
+  padding: 0 10px;
+  margin-left: 8px;
+  flex: 0 0 auto;
+  color: var(--tb-dim);
+}
+
+#volwrap svg {
+  width: 16px;
+  height: 16px;
+}
+
+#volwrap input {
+  width: 96px;
+}
+
+/* ---- the volume sliders ----------------------------------------------
+   Drawn rather than left to the browser, because a native range fills its
+   track only as far as the middle of the handle: turned right up, the last
+   few pixels stayed empty and the bar never looked full. Here the fill is a
+   gradient stopped at --v, which the control sets from its own value, so at
+   the top the bar is the whole bar. */
+
+#volwrap input[type="range"],
+.volpop input[type="range"],
+#noise input[type="range"] {
+  appearance: none;
+  -webkit-appearance: none;
+  height: 14px;
+  background: none;
+  
+}
+
+/* Normal volume is the halfway mark, and everything past it is a boost --
+   so the bar changes colour there rather than pretending the two are the
+   same thing. --loud is where normal ends; the noise slider has no boost, so
+   it sets --loud to the whole track and stays one colour. */
+#volwrap input[type="range"],
+.volpop input[type="range"] {
+  --loud: 50%;
+}
+
+#noise input[type="range"] {
+  --loud: 100%;
+}
+
+#volwrap input[type="range"]::-webkit-slider-runnable-track,
+.volpop input[type="range"]::-webkit-slider-runnable-track,
+#noise input[type="range"]::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(
+    to right,
+    var(--tb-gold) 0 min(var(--v, 100%), var(--loud)),
+    #e0664c min(var(--v, 100%), var(--loud)) var(--v, 100%),
+    color-mix(in srgb, var(--tb-line) 85%, transparent) var(--v, 100%) 100%
+  );
+}
+
+#volwrap input[type="range"]::-webkit-slider-thumb,
+.volpop input[type="range"]::-webkit-slider-thumb,
+#noise input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 11px;
+  height: 11px;
+  margin-top: -3.5px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--tb-gold);
+}
+
+#volwrap input[type="range"]::-moz-range-track,
+.volpop input[type="range"]::-moz-range-track,
+#noise input[type="range"]::-moz-range-track {
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(
+    to right,
+    var(--tb-gold) 0 min(var(--v, 100%), var(--loud)),
+    #e0664c min(var(--v, 100%), var(--loud)) var(--v, 100%),
+    color-mix(in srgb, var(--tb-line) 85%, transparent) var(--v, 100%) 100%
+  );
+}
+
+#volwrap input[type="range"]::-moz-range-thumb,
+.volpop input[type="range"]::-moz-range-thumb,
+#noise input[type="range"]::-moz-range-thumb {
+  width: 11px;
+  height: 11px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--tb-gold);
+}
+
+#volwrap input[type="range"]:focus,
+.volpop input[type="range"]:focus,
+#noise input[type="range"]:focus {
+  outline: none;
+}
+
+#volwrap::before {
+  content: "";
+  align-self: center;
+  height: 18px;
+  width: 1px;
+  background: var(--tb-line);
+  margin-right: 4px;
+}
+
+/* ---- the volume button, and the panel of trims behind it -------------
+   The master slider beside it is untouched: this is a second level under
+   it, one platform at a time, and the panel is the only thing that draws
+   it. */
+
+#volwrap {
+  position: relative;
+}
+
+.volbtn {
+  position: relative;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  margin: 0;
+  border: 1px solid var(--tb-line);
+  border-radius: 7px;
+  background: none;
+  color: inherit;
+  
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+
+.volbtn:hover {
+  color: var(--tb-ink);
+  background: rgba(128, 128, 128, 0.16);
+}
+
+#volwrap.open .volbtn {
+  color: var(--tb-gold);
+  background: rgba(128, 128, 128, 0.16);
+}
+
+.volpop {
+  position: absolute;
+  top: 34px;
+  right: 0;
+  z-index: 99999;
+  width: 288px;
+  padding: 11px;
+  border-radius: 10px;
+  border: 1px solid var(--tb-line);
+  background: var(--tb-strip);
+  color: var(--tb-ink);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.3);
+  
+  /* Every source has a row of its own, so the panel is as long as the app has
+     things that play. On a window too short for all of them it scrolls rather
+     than running off the bottom edge. */
+  max-height: min(74vh, 560px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.volhead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0 0 9px;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--tb-dim);
+}
+
+.volmaster {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 4px 8px;
+  margin: 0 0 12px;
+  padding: 9px 2px 12px;
+  border-bottom: 1px solid var(--tb-line);
+  font-size: 12px;
+}
+#volwrap .volmaster input[type="range"] { grid-column: 1 / -1; width: 100%; }
+
+.volreset {
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--tb-line);
+  background: var(--tb-bg);
+  color: var(--tb-ink);
+}
+
+.volreset:hover:enabled {
+  border-color: var(--tb-gold);
+}
+
+.volreset:disabled {
+  
+  opacity: 0.4;
+}
+
+.volgroup + .volgroup {
+  margin-top: 10px;
+  padding-top: 9px;
+  border-top: 1px solid var(--tb-line);
+}
+
+.volcap {
+  margin: 0 0 3px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--tb-dim);
+  opacity: 0.75;
+}
+
+/* Name and level on one line, the slider the width of the panel under it:
+   five platform names do not shorten to anything worth reading, and a name
+   cut off to make room for a slider is worse than a slider on its own row. */
+.volrow {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 1px 8px;
+  padding: 4px 0;
+}
+
+.volname {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  font-size: 12.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.volname img,
+.volname .volmark {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  border-radius: 3px;
+  object-fit: contain;
+}
+
+/* A page's mark is an emoji rather than a logo, and an emoji sets on its own
+   baseline: centred in the same square, the two kinds of row line up. */
+.volname .volmark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.volpct {
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--tb-dim);
+}
+
+.volpop input[type="range"] {
+  grid-column: 1 / -1;
+  width: 100%;
+  margin: 0;
+}
+
+.volnote {
+  margin: 10px 0 0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--tb-dim);
+}
+
+#theme {
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  
+  flex: 0 0 auto;
+  height: 30px;
+  margin-right: 4px;
+  padding: 0 11px;
+  border: 1px solid var(--tb-line);
+  border-radius: 8px;
+  background: none;
+  color: var(--tb-dim);
+  white-space: nowrap;
+}
+
+#theme:hover {
+  color: var(--tb-ink);
+  background: rgba(128, 128, 128, 0.16);
+}
+
+.windows-input { position: relative; display: inline-flex; align-items: center; flex: none;
+  gap: 2px; padding: 0 5px; border-left: 1px solid var(--tb-line); }
+.windows-input > button, .windows-input > .windows-layout { display: inline-flex; align-items: center; justify-content: center;
+  height: 30px; min-width: 29px; padding: 0 5px; border: 1px solid var(--tb-line); border-radius: 7px;
+  color: var(--tb-ink); background: transparent; font: 600 13px/1 system-ui, sans-serif;
+   white-space: nowrap; }
+.windows-input > button:hover {
+  background: var(--tb-tab-hover); }
+.windows-input > button:focus-visible { outline: 2px solid var(--tb-gold); outline-offset: 1px; }
+.windows-input-icon { display: block; width: 19px; height: 19px; object-fit: contain; }
+/* ---- the pages ---- */
+
+.shell-workspace { display: flex; flex: 1 1 auto; min-height: 0; min-width: 0; }
+
+
+.stack {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  background: var(--tb-bg);
+}
+
+.pane {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--tb-bg);
+}
+
+.browser-pane { display: flex; flex-direction: column; }
+.browser-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; padding: 7px 9px; border-bottom: 1px solid var(--tb-line); }
+.browser-toolbar input, .browser-toolbar button, .browser-error button {
+  padding: 6px 9px; border: 1px solid var(--tb-line); border-radius: 6px;
+  background: var(--tb-bg); color: inherit; font: inherit;
+}
+.browser-toolbar input { flex: 1 1 180px; min-width: 0; }
+.browser-toolbar button, .browser-error button { cursor: pointer; }
+.browser-toolbar button:disabled { opacity: .45; cursor: default; }
+.browser-toolbar button:hover:not(:disabled) { border-color: var(--tb-gold); }
+.browser-bookmark-star[data-saved="true"] .browser-icon { color:var(--tb-gold); fill:currentColor; }
+.browser-toolbar .browser-ad-block[aria-pressed="true"] { border-color: var(--tb-gold); }
+.browser-host { flex: 1 1 auto; min-height: 0; }
+.browser-content { display: flex; flex: 1 1 auto; min-height: 0; }
+.browser-bookmarks { flex: 0 0 min(360px,55%); min-width: 0; overflow: auto; border-left: 1px solid var(--tb-line); padding: 12px; box-sizing: border-box; }
+.browser-icon { display:block; flex:none; }
+.browser-toolbar button { display:inline-flex; align-items:center; justify-content:center; min-width:32px; height:32px; padding:6px; }
+.browser-toolbar .browser-ad-block { position:relative; }
+.browser-status-dot { position:absolute; right:2px; bottom:2px; width:7px; height:7px; border:2px solid var(--tb-bg); border-radius:50%; background:#ef4444; }
+.browser-ad-block[aria-pressed="true"] .browser-status-dot { background:#22c55e; }
+.browser-bookmarks header { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; gap:8px; }
+.browser-bookmark-actions { display:flex; gap:3px; }
+.browser-bookmarks button { color:inherit; background:transparent; border:0; border-radius:5px; cursor:pointer; font:inherit; }
+.browser-bookmarks header button, .browser-bookmark-context button { display:inline-grid; place-items:center; width:30px; height:30px; padding:5px; }
+.browser-bookmarks button:hover, .browser-bookmark-folder summary:hover, .browser-bookmark-row:hover { background:var(--tb-tab-hover); }
+.browser-bookmarks button:disabled { opacity:.4; cursor:default; }
+.browser-bookmarks button:focus-visible, .browser-bookmark-folder summary:focus-visible { outline:2px solid var(--tb-gold); outline-offset:1px; }
+.browser-bookmark-new-folder { display:flex; gap:5px; margin-bottom:10px; }
+.browser-bookmark-new-folder input { flex:1; min-width:0; padding:6px 8px; border:1px solid var(--tb-line); border-radius:5px; background:var(--tb-bg); color:inherit; font:inherit; }
+.browser-bookmark-new-folder button { display:grid; place-items:center; width:30px; }
+.browser-bookmark-folder { margin:2px 0; }
+.browser-bookmark-folder summary { display:flex; align-items:center; gap:7px; padding:7px 5px; cursor:pointer; list-style:none; border-radius:5px; }
+.browser-bookmark-folder summary::-webkit-details-marker { display:none; }
+.browser-bookmark-folder summary::before { content:'▸'; width:10px; flex:none; }
+.browser-bookmark-folder[open] > summary::before { content:'▾'; }
+.browser-bookmark-folder summary > span:not(.browser-bookmark-grip) { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.browser-bookmark-grip { opacity:.35; cursor:grab; display:inline-flex; flex:none; }
+.browser-bookmark-list { list-style:none; padding:0; margin:0; }
+.browser-bookmark-folder > .browser-bookmark-list { padding-left:17px; }
+.browser-bookmark-row { display:flex; gap:7px; align-items:center; border-radius:5px; padding:3px 5px 3px 22px; }
+.browser-bookmark-row > .browser-icon { flex:none; }
+.browser-bookmark-folder .browser-bookmark-row { padding-left:5px; }
+.browser-bookmark-list .browser-bookmark-link { display:block; flex:1; min-width:0; padding:5px 0; text-align:left; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:13px; }
+.browser-bookmark-root { position:relative; padding-bottom:28px; }
+.browser-bookmark-root[data-drop="after"]::after { content:""; position:absolute; inset:auto 0 26px; border-bottom:2px solid var(--tb-gold); pointer-events:none; }
+.browser-bookmarks [data-drop="before"]:not(.browser-bookmark-root) { box-shadow:inset 0 2px var(--tb-gold); }
+.browser-bookmark-row[data-drop="after"] { box-shadow:inset 0 -2px var(--tb-gold); }
+.browser-bookmark-folder:has(> summary[data-drop="after"]) { position:relative; }
+.browser-bookmark-folder:has(> summary[data-drop="after"])::after { content:""; position:absolute; inset:auto 0 0; border-bottom:2px solid var(--tb-gold); pointer-events:none; }
+.browser-bookmark-folder summary[data-drop="inside"] { background:var(--tb-tab-hover); box-shadow:inset 0 0 0 2px var(--tb-gold); }
+.browser-bookmark-context { position:fixed; z-index:10000; display:flex; gap:4px; padding:5px; border:1px solid var(--tb-line); border-radius:7px; background:var(--tb-bg); box-shadow:0 6px 24px #0005; }
+.browser-error { padding: 8px 9px; border-bottom: 1px solid var(--tb-line); }
+
+/* The pane with focus is marked, so it is clear which one a key press or a
+   lookup will land in. */
+.stack.split .pane.on {
+  box-shadow: inset 0 2px 0 var(--tb-gold);
+}
+
+.pane-splitter {
+  position: absolute;
+  z-index: 20;
+  top: 0;
+  bottom: 0;
+  width: 12px;
+  margin-left: -6px;
+  cursor: ew-resize;
+  touch-action: none;
+  outline: none;
+}
+.pane-splitter::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 5px;
+  width: 2px;
+  background: var(--tb-line);
+  transition: background .12s, width .12s;
+}
+.pane-splitter:hover::after,
+.pane-splitter:focus-visible::after,
+.pane-splitter:active::after {
+  left: 4px;
+  width: 4px;
+  background: var(--tb-gold);
+}
+
+/* The rule between panes is set on the element in Frames.tsx: the frames are
+   no longer in pane order in the document, so a sibling selector would put it
+   on whichever one happened to come second. */
+
+/* ---- a tab's own menu ---- */
+
+.tabmenu {
+  position: fixed;
+  z-index: 99999;
+  min-width: 13em;
+  background: var(--tb-strip);
+  color: var(--tb-ink);
+  border: 1px solid var(--tb-line);
+  border-radius: 10px;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.28);
+  padding: 5px;
+  font-size: 13.5px;
+}
+
+.tabmenu-item {
+  padding: 7px 12px;
+  border-radius: 7px;
+  
+  white-space: nowrap;
+}
+
+.tabmenu-item:hover {
+  background: rgba(128, 128, 128, 0.18);
+}
+
+/* An entry that would do nothing -- Back on a tab that has been nowhere --
+   is greyed rather than missing, so the menu keeps its shape. */
+.tabmenu-item.off {
+  opacity: 0.4;
+  
+}
+
+.tabmenu-item.off:hover {
+  background: none;
+}
+
+.tabmenu-sep {
+  height: 1px;
+  margin: 5px 8px;
+  background: var(--tb-line);
+}
+
+/* ---- tab groups ------------------------------------------------------
+   A group is a run of tabs that belong together, wearing one colour and one
+   name, with a chip at the head of the run that folds the whole thing away.
+   Every rule here is driven by --g, which each tab and chip carries as the
+   group's own colour: there is no fixed set of classes for eight colours. */
+
+.gchip {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 22px;
+  max-width: 170px;
+  margin: 0 4px 0 3px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  
+  color: var(--tb-ink);
+  background: color-mix(in srgb, var(--g) 26%, var(--tb-bg));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--g) 65%, transparent);
+}
+
+.gchip:hover {
+  background: color-mix(in srgb, var(--g) 40%, var(--tb-bg));
+}
+
+.gchip .gname {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gchip .gname.cjk {
+  font-size: 13.5px;
+  font-weight: 500;
+}
+
+/* Folded: the chip says how many tabs are inside it. */
+.gchip .gcount {
+  flex: 0 0 auto;
+  opacity: 0.75;
+  font-weight: 600;
+}
+
+.gchip.shut {
+  background: color-mix(in srgb, var(--g) 40%, var(--tb-bg));
+}
+
+/* Being carried, and about to be landed on. */
+.gchip.drag {
+  opacity: 0.45;
+}
+
+.gchip.drop {
+  box-shadow: inset 0 0 0 2px var(--tb-gold);
+}
+
+/* A tab inside a group: the group's colour along the top of it and a breath
+   of it in the fill, so the run reads as one block. */
+.tab.ing {
+  border-radius: 0;
+  border-color: color-mix(in srgb, var(--g) 45%, var(--tb-line));
+  background: color-mix(in srgb, var(--g) 11%, var(--tb-tab));
+  box-shadow: inset 0 2px 0 var(--g);
+}
+
+.tab.ing:hover {
+  background: color-mix(in srgb, var(--g) 17%, var(--tb-tab-hover));
+}
+
+.tab.ing.on {
+  background: color-mix(in srgb, var(--g) 20%, var(--tb-active));
+  box-shadow: inset 0 2px 0 var(--g);
+}
+
+.tab.ing.sp {
+  background: color-mix(in srgb, var(--g) 16%, var(--tb-active));
+}
+
+/* The two ends of the run are what round off; the middle does not. */
+.tab.ing1 { border-top-left-radius: 9px; }
+.tab.ingn { border-top-right-radius: 9px; }
+
+/* ---- naming and colouring a group ---- */
+
+.gname-edit {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 1px 0 8px;
+  font: inherit;
+  font-size: 13px;
+  padding: 6px 9px;
+  border-radius: 7px;
+  border: 1px solid var(--tb-line);
+  background: var(--tb-bg);
+  color: var(--tb-ink);
+}
+
+.gname-edit:focus {
+  outline: none;
+  border-color: var(--tb-gold);
+}
+
+.gswatches {
+  display: flex;
+  gap: 7px;
+  padding: 0 3px 5px;
+}
+
+.gswatch {
+  width: 17px;
+  height: 17px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  
+}
+
+.gswatch.on {
+  box-shadow: 0 0 0 2px var(--tb-strip), 0 0 0 3.5px var(--tb-ink);
+}
+
+/* ---- the white-noise player ---- */
+
+#noise {
+  position: relative;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+}
+
+#noise > button {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid var(--tb-line);
+  border-radius: 8px;
+  background: none;
+  color: var(--tb-dim);
+  
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#noise > button svg {
+  width: 17px;
+  height: 17px;
+}
+
+#noise > button:hover {
+  color: var(--tb-ink);
+  background: rgba(128, 128, 128, 0.16);
+}
+
+#noise > button.on {
+  color: var(--tb-gold);
+}
+
+#noise input[type="range"] {
+  width: 124px;
+  margin: 0;
+}
+
+.noisepop {
+  position: absolute;
+  top: 36px;
+  right: 0;
+  z-index: 99999;
+  box-sizing: border-box;
+  width: 170px;
+  padding: 7px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 9px;
+  border: 1px solid var(--tb-line);
+  background: var(--tb-strip);
+  color: var(--tb-ink);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.28);
+}
+
+.noiseplay {
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--tb-line);
+  border-radius: 6px;
+  background: var(--tb-bg);
+  color: var(--tb-ink);
+  
+}
+
+.noiseplay:hover,
+.noiseplay.on { color: var(--tb-gold); border-color: var(--tb-gold); }
+.noiseplay svg { width: 12px; height: 12px; }
+.noisepop input[type="range"] { width: 124px; min-width: 0; flex: 1 1 auto; }
+.browser-dialog-fields { display:grid; gap:12px; }
+.browser-dialog-fields h2 { margin:0; font-size:17px; }
+.browser-dialog-fields label { display:grid; gap:4px; font-size:13px; }
+.browser-dialog-fields input, .browser-dialog-fields select { min-width:0; }
+.browser-dialog-fields .browser-block-switch { display:flex; align-items:center; gap:7px; }
+.browser-dialog-actions { display:flex; justify-content:flex-end; gap:8px; }
+.browser-element-rules { margin:0; padding:0; list-style:none; max-height:210px; overflow:auto; }
+.browser-element-rules li { display:flex; align-items:center; gap:8px; padding:4px 0; }
+.browser-element-rules code { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.browser-element-rules button { display:grid; place-items:center; padding:5px; }

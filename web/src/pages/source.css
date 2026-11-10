@@ -1,0 +1,7 @@
+.wrap-source { max-width: 860px; }
+.source-entry { margin-top: 24px; padding: 24px 28px; background: var(--card);
+  border: 1px solid var(--line); border-radius: 14px; }
+.source-entry h2 { margin: 0 0 14px; font-size: 20px; }
+.source-entry p { line-height: 1.65; }
+.source-entry ul { padding-left: 22px; line-height: 1.9; }
+.source-entry a { color: var(--accent); }

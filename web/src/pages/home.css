@@ -1,0 +1,40 @@
+/* The Home page's own style, as it stands in server.py. */
+
+.homesearch { display: flex; gap: 10px; margin: 18px 0 26px;
+  max-width: 640px; }
+.homesearch input { flex: 1; font: inherit; font-size: 18px;
+  padding: 13px 16px; border: 1px solid var(--line); border-radius: 12px;
+  background: var(--card); color: var(--ink); }
+@media (prefers-color-scheme:dark){
+ :root:not([data-theme="light"]) .homesearch input{
+  background:#242c36; border-color:#3d4754; color:#e9edf1; }
+ :root:not([data-theme="light"]) .homesearch input::placeholder{
+  color:#8e9aa7; }}
+:root[data-theme="dark"] .homesearch input{
+ background:#242c36; border-color:#3d4754; color:#e9edf1; }
+:root[data-theme="dark"] .homesearch input::placeholder{ color:#8e9aa7; }
+.homesearch button { appearance: none; 
+  background: #fdbc1e; border: 1px solid #d9a512; border-radius: 12px;
+  color: #000; display: inline-flex; align-items: center;
+  padding: 0 18px; }
+.homesearch svg { width: 21px; height: 21px; }
+.homegrid { display: grid; gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+  max-width: 1240px; }
+.homecard { display: block; text-decoration: none; color: var(--ink);
+  background: var(--card); border: 1px solid var(--line);
+  border-radius: 14px; padding: 18px 20px;
+  border-top: 3px solid #fdbc1e;
+  transition: border-color .12s ease, box-shadow .12s ease, transform .12s ease; }
+/* The whole card answers a hover, the way .gamecard already does on the
+   games grid -- not just the border it was left with by accident. Chinese
+   For Us's own stylesheet also underlines every link on hover, which is
+   right for a word inline in a sentence and wrong for a card that is a
+   link in name only; its "a:hover" beats this card's own "text-decoration:
+   none" on specificity alone, so that has to be said again here too. */
+.homecard:hover { text-decoration: none; border-color: var(--accent);
+  box-shadow: 0 6px 16px rgba(0,0,0,.14); transform: translateY(-1px); }
+.homecard h3 { margin: 6px 0 0; font-size: 17.5px; }
+.homecard p { margin: 0; color: var(--muted); font-size: 14.5px; }
+.hemoji { font-size: 26px; }
+.homeh2 { margin: 30px 0 14px; }

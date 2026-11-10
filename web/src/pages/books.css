@@ -1,0 +1,155 @@
+/* The Books page's style, lifted straight out of BOOKS_BODY in server.py
+   rather than retyped. It sits on top of the two library stylesheets every
+   hub page loads, which is where --card, --line and --muted come from. */
+
+.wrap-books h1 { margin-top: 26px; }
+.bkbar { display: flex; gap: 12px; align-items: center; margin: 16px 0 14px;
+  flex-wrap: wrap; }
+.bkbar input { font: inherit; font-size: 14px; padding: 8px 13px;
+  border-radius: 999px; border: 1px solid var(--line);
+  background: var(--card); color: var(--ink); width: 300px; max-width: 100%; }
+.bkgrid { display: grid; gap: 22px 18px;
+  grid-template-columns: repeat(auto-fill, minmax(152px, 1fr)); }
+/* The cover does the work; the title sits under it, as on a shelf. */
+.bkcard { position: relative; display: block; text-decoration: none;
+  color: var(--ink); }
+.bkcard .cover { position: relative; aspect-ratio: 3 / 4; overflow: hidden;
+  border-radius: 3px 8px 8px 3px; border: 1px solid var(--line);
+  background: var(--card); display: flex; align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 2px rgba(0,0,0,.22), 0 9px 22px rgba(0,0,0,.24);
+  transition: transform .12s ease, box-shadow .12s ease; }
+.bkcard .cover img, .bkcard .cover canvas { width: 100%; height: 100%;
+  object-fit: cover; display: block; }
+.bkcard .cover .none { font-size: 34px; opacity: .32; }
+/* An EPUB with no cover of its own: its actual first page, shrunk to a
+   thumbnail rather than redrawn as one. Pictures inside are hidden -- see
+   the comment on EpubCover -- so only the text carries the page. */
+.bkcard .cover .epub-firstpage {
+  width: 100%; height: 100%; overflow: hidden; box-sizing: border-box;
+  padding: 10px 8px; font-size: 5.5px; line-height: 1.35;
+  color: var(--ink); background: var(--card); text-align: left;
+  pointer-events: none; -webkit-mask-image: linear-gradient(to bottom, #000 82%, transparent 100%);
+          mask-image: linear-gradient(to bottom, #000 82%, transparent 100%);
+}
+.bkcard .cover .epub-firstpage img,
+.bkcard .cover .epub-firstpage svg,
+.bkcard .cover .epub-firstpage audio,
+.bkcard .cover .epub-firstpage video { display: none; }
+.bkcard .cover .epub-firstpage * { max-width: 100%; }
+.bkcard:hover .cover { transform: translateY(-2px);
+  box-shadow: 0 2px 4px rgba(0,0,0,.24), 0 14px 30px rgba(0,0,0,.3); }
+/* Overlapping the corner, not tucked inside it. */
+.bkcard .kind { position: absolute; top: -9px; right: -9px; z-index: 3;
+  font-size: 10px; font-weight: 700; letter-spacing: .06em;
+  padding: 3px 8px; border-radius: 999px; color: #fff;
+  box-shadow: 0 1px 4px rgba(0,0,0,.4); }
+.bkcard .kind.pdf { background: #c8433c; }
+.bkcard .kind.epub { background: #2f6fc0; }
+.bkcard h3 { margin: 10px 2px 2px; font-size: 13px; line-height: 1.35;
+  font-weight: 600; word-break: break-word; }
+.bkcard .meta { color: var(--muted); font-size: 11.5px; margin: 0 2px; }
+.bkgroup { margin: 0 0 8px; color: var(--muted); font-size: 12.5px;
+  font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+.bksec { margin-bottom: 24px; }
+
+/* How far through a book you are: the two numbers under the cover, and a rule
+   across the foot of it. A shelf you have read half of should look like one. */
+.bkcard .bkprog {
+  display: block;
+  height: 3px;
+  margin: -3px 0 0;
+  border-radius: 0 0 2px 2px;
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+  position: relative;
+  overflow: hidden;
+}
+
+.bkcard .bkprog::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--done, 0%);
+  background: var(--accent);
+}
+
+.bkcard .meta .bkat {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+/* Grouping: drag a book onto another (or onto a shelf's own label) to file
+   it there, right-click a grouped book for the menu that takes it back off. */
+.bkcard {  }
+.bkcard.dragging { opacity: .4; }
+.bkcard.drop-target .cover {
+  outline: 2px solid var(--accent); outline-offset: 2px;
+}
+.bkgroup {  border-radius: 8px; padding: 3px 8px; margin: 0 0 8px -8px;
+  transition: background .1s ease, color .1s ease; }
+.bkgroup.drop-target {
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  color: var(--ink);
+}
+
+.bkctxmenu {
+  position: fixed; z-index: 90; min-width: 11em; max-width: 240px;
+  background: var(--card); color: var(--ink);
+  border: 1px solid var(--line); border-radius: 10px;
+  box-shadow: 0 10px 26px rgba(0,0,0,.28); padding: 5px;
+  font-size: 14.5px;
+}
+.bkctxitem {
+  padding: 8px 13px; border-radius: 7px; 
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.bkctxitem:hover { background: var(--bg); }
+.bkctxback { color: var(--muted); }
+.bkctxsep { height: 1px; background: var(--line); margin: 4px 6px; }
+.bkctxfolders { max-height: 220px; overflow-y: auto; }
+
+/* Switching between the flat shelf page and the one-level-at-a-time browser. */
+.bkviewtoggle {
+  display: flex; border: 1px solid var(--line); border-radius: 999px;
+  padding: 2px;
+}
+.bkviewtoggle button {
+  appearance: none; font: inherit; font-size: 13px; 
+  border: none; background: transparent; color: var(--muted);
+  padding: 6px 14px; border-radius: 999px;
+}
+/* --accent-ink is white for the blue --accent the two library stylesheets
+   set; Central overrides --accent to gold without a matching --accent-ink
+   (see hub.css), so white text on it fails contrast the same way it did on
+   .pftab.on -- fixed the same way, a dark ink of its own. */
+.bkviewtoggle button.on { background: var(--accent); color: #171308; font-weight: 700; }
+
+/* The folder browser: where it is standing, and the folders under that. */
+.bkcrumbs { margin: 4px 0 18px; font-size: 14px; color: var(--muted); }
+.bkcrumb {  }
+.bkcrumb:hover { color: var(--accent); text-decoration: underline; }
+.bkcrumb-current { color: var(--ink); font-weight: 600;  }
+.bkcrumb-current:hover { text-decoration: none; }
+.bkcrumb-sep { margin: 0 7px; opacity: .5; }
+
+.bkfoldergrid { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 22px; }
+.bkfoldertile {
+  display: flex; align-items: center; gap: 9px; 
+  padding: 11px 16px; border: 1px solid var(--line); border-radius: 10px;
+  background: var(--card); transition: border-color .1s ease, background .1s ease;
+}
+.bkfoldertile:hover { border-color: var(--accent); }
+.bkfoldertile.drop-target {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+.bkfoldericon { font-size: 18px; }
+.bkfoldername { font-size: 14px; font-weight: 600; }
+
+.bkerror {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  color: var(--bad); background: var(--bad-bg); border: 1px solid var(--bad);
+  border-radius: 9px; padding: 10px 14px; 
+}
+.bkerror-x { text-decoration: underline; white-space: nowrap; }
+

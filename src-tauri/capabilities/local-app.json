@@ -1,0 +1,14 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "local-app",
+  "description": "Allow the locally served Chinese Central desktop page to invoke its fullscreen command.",
+  "webviews": ["main"],
+  "remote": { "urls": ["http://127.0.0.1:8821/*"] },
+  "permissions": [
+    "allow-app-fullscreen",
+    "allow-browser-tab",
+    "allow-set-reader-find-active",
+    "allow-windows-input-state",
+    "allow-toggle-windows-ime"
+  ]
+}

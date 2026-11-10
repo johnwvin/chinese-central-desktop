@@ -1,0 +1,9 @@
+[[permission]]
+identifier = "allow-windows-input-state"
+description = "Read the Windows keyboard layout and Chinese input mode."
+commands.allow = ["windows_input_state"]
+
+[[permission]]
+identifier = "allow-toggle-windows-ime"
+description = "Switch the Windows Chinese input mode."
+commands.allow = ["toggle_windows_ime"]

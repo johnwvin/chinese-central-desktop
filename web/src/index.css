@@ -1,0 +1,296 @@
+
+
+:root {
+  --bg: #f6f7f9;
+  --card: #fff;
+  --ink: #14181c;
+  --muted: #5b6672;
+  --line: #e3e7ec;
+  --accent: #d99e00;
+  --ok: #1a7f45;
+  --bad: #c8362f;
+  /* Used, but never declared until now: the books page asks for both, so its
+     error banner was drawing on the page's own background and its modal cast
+     no shadow at all. */
+  --bad-bg: #fdf0ef;
+  --shadow: 0 18px 48px rgba(0, 0, 0, 0.18), 0 2px 8px rgba(0, 0, 0, 0.1);
+
+  --radius: 9px;
+  --gap: 14px;
+
+  /* light, NOT "light dark". color-scheme is what the browser paints the
+     canvas with -- the frame behind the document, and the gap between one
+     page and the next. "light dark" hands that decision to the machine, so
+     choosing light on a dark machine left the canvas near-black behind a
+     light page: a black flash on every navigation, everywhere in the app.
+     It has to follow the theme actually in force, so it is declared with
+     the colours, in all three places. */
+  color-scheme: light;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #0f1216;
+    --card: #171c22;
+    --ink: #e9edf1;
+    --muted: #9aa6b2;
+    --line: #2a323b;
+    --accent: #fdbc1e;
+    --ok: #46c07d;
+    --bad: #c8362f;
+    --bad-bg: #2b1614;
+    --shadow: 0 18px 48px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.36);
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0f1216;
+  --card: #171c22;
+  --ink: #e9edf1;
+  --muted: #9aa6b2;
+  --line: #2a323b;
+  --accent: #fdbc1e;
+  --ok: #46c07d;
+  --bad: #c8362f;
+  --bad-bg: #2b1614;
+  --shadow: 0 18px 48px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.36);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+h1 {
+  font-size: 26px;
+  margin: 0 0 18px;
+}
+
+h2 {
+  font-size: 17px;
+  margin: 26px 0 10px;
+}
+
+a {
+  color: inherit;
+}
+
+code,
+.mono {
+  font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+}
+
+.page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 26px 20px 60px;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 16px 18px;
+  margin-bottom: 18px;
+}
+
+.note {
+  color: var(--muted);
+  margin: 0 0 12px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+}
+
+.row:first-of-type {
+  border-top: 0;
+}
+
+/* The label down the left of each row of buttons. */
+.row > .label {
+  color: var(--muted);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  width: 108px;
+  flex: none;
+}
+
+.btn {
+  background: var(--card);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 8px 14px;
+  font: inherit;
+  
+}
+
+.btn:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  
+}
+
+.btn.primary {
+  background: var(--bad);
+  border-color: var(--bad);
+  color: #fff;
+}
+
+.btn.accent {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #000;
+}
+
+input,
+select {
+  background: var(--bg);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 8px 10px;
+  font: inherit;
+}
+
+/* A picker sits beside its button rather than pushing it onto its own line:
+   the Lazy Chinese series names are long enough to fill any width given. */
+.row select {
+  max-width: 340px;
+}
+
+input::placeholder {
+  color: var(--muted);
+}
+
+.ok {
+  color: var(--ok);
+}
+
+.bad {
+  color: var(--bad);
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.pill {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* The running job's output. */
+.log {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  max-height: 320px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+  font-size: 12px;
+  margin-top: 12px;
+}
+
+.bar {
+  height: 6px;
+  background: var(--line);
+  border-radius: 999px;
+  overflow: hidden;
+  margin: 8px 0;
+}
+
+.bar > span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+}
+
+.error {
+  color: var(--bad);
+  margin: 8px 0 0;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 6px 8px;
+  border-top: 1px solid var(--line);
+  vertical-align: top;
+}
+
+th {
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 12px;
+}
+
+/* THE CLEAR CROSS IS A BIGGER TARGET THAN IT LOOKS.
+   Chromium draws its own cross in a search field, about fourteen pixels
+   square, and that is the whole of the click target -- a small thing to hit,
+   and it carries the arrow cursor, so it does not look like something to
+   press either.
+
+   Padding rather than width, and no `appearance: none`: the browser goes on
+   drawing its own cross at its own size, and the padding grows only the box
+   around it. The cross does not get bigger; the area that answers to a click
+   does. Taking the glyph over -- appearance:none plus a mask -- would have
+   let the size be set exactly, and would also have meant that anywhere the
+   mask failed to load there would be no cross at all rather than a small
+   one. Not worth it for a hit target.
+
+   The negative margin lets the wider box reach into the field's own padding
+   instead of pushing the text along. */
+input[type="search"]::-webkit-search-cancel-button {
+  
+  padding: 9px;
+  margin-right: -5px;
+}
+
+.location-settings { display:grid; gap:20px; max-width:700px; }
+.location-form { display:flex; flex-wrap:wrap; align-items:end; gap:8px; }
+.location-form label { display:grid; gap:4px; flex:1 1 250px; }
+.location-form output { width:100%; }
+.plain-notebook { display:grid; grid-template-columns:minmax(130px, 220px) minmax(0,1fr); gap:14px; }
+.plain-notebook aside,.notebook-editor { display:flex; flex-direction:column; gap:8px; min-width:0; }
+.plain-notebook ul { list-style:none; margin:0; padding:0; display:grid; gap:4px; }
+.plain-notebook li button { width:100%; text-align:left; overflow-wrap:anywhere; }
+.plain-notebook li button[aria-pressed="true"] { border-color:var(--accent); }
+.plain-notebook small { display:block; color:var(--muted); }
+.notebook-editor textarea { min-height:240px; padding:10px; resize:vertical; font:inherit; color:var(--ink); background:var(--card); border:1px solid var(--line); border-radius:8px; }
+.notebook-actions,.notebook-folders,.notebook-folders form { display:flex; align-items:center; flex-wrap:wrap; gap:8px; }
+.pronunciation-volume { position:relative; }
+.pronunciation-volume summary { cursor:pointer; list-style:none; padding:4px; }
+.pronunciation-volume label { position:absolute; right:0; top:100%; z-index:30; background:var(--card); border:1px solid var(--line); border-radius:8px; padding:8px; display:grid; gap:6px; white-space:nowrap; }
+@media(max-width:530px) { .plain-notebook { grid-template-columns:1fr; } .plain-notebook ul { max-height:160px; overflow:auto; } }
