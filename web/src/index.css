@@ -173,8 +173,7 @@ select {
   font: inherit;
 }
 
-/* A picker sits beside its button rather than pushing it onto its own line:
-   the Lazy Chinese series names are long enough to fill any width given. */
+/* Limit picker width so it fits beside its button. */
 .row select {
   max-width: 340px;
 }
