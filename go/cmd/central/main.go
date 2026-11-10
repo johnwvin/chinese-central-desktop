@@ -41,7 +41,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("Chinese Central Vanilla:", listener.Addr())
+	fmt.Println("Chinese Central:", listener.Addr())
 	httpServer := http.Server{Handler: server.New(paths.Layout{Resource: *root, Data: *data}).Handler(), ReadHeaderTimeout: 10 * time.Second}
 	log.Fatal(httpServer.Serve(listener))
 }

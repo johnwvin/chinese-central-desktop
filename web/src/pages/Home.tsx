@@ -17,7 +17,7 @@ const PAGES = [
 export function Home() {
   return (
     <HubPage name="home">
-      <h1>Chinese Central Vanilla</h1>
+      <h1>Chinese Central</h1>
 
       <form className="homesearch" action="/dictionary" method="get">
         <input

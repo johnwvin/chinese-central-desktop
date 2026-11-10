@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Chinese Central Vanilla",
+  "productName": "Chinese Central",
   "version": "0.1.0",
   "identifier": "com.chinesecentral.vanilla",
   "build": {
@@ -11,7 +11,7 @@
     "windows": [
       {
         "label": "main",
-        "title": "Chinese Central Vanilla",
+        "title": "Chinese Central",
         "url": "http://127.0.0.1:8821/",
         "width": 1450,
         "height": 900,

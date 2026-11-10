@@ -49,7 +49,7 @@ fn server_ready() -> bool {
 fn backend_path() -> Option<PathBuf> {
     let executable = std::env::current_exe().ok()?;
     let folder = executable.parent()?;
-    let sibling = folder.join("Chinese Central Vanilla Server.exe");
+    let sibling = folder.join("Chinese Central Server.exe");
     if sibling.is_file() {
         return Some(sibling);
     }
@@ -60,7 +60,7 @@ fn backend_path() -> Option<PathBuf> {
 fn main() {
     let owned_server: Arc<Mutex<Option<Child>>> = Arc::new(Mutex::new(None));
     if !server_ready() {
-        let backend = backend_path().expect("Chinese Central Vanilla Server.exe was not found beside the desktop app");
+        let backend = backend_path().expect("Chinese Central Server.exe was not found beside the desktop app");
         let child = Command::new(backend)
             .args(["--port", "8821"])
             .spawn()

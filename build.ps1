@@ -18,11 +18,11 @@ if (-not $SkipWebInstall) { Run-Tool npm @('--prefix', $web, 'ci') }
 Run-Tool npm @('--prefix', $web, 'run', 'build')
 
 $package = Join-Path ([IO.Path]::GetTempPath()) ('cc-vanilla-package-' + [Guid]::NewGuid().ToString('N'))
-$app = Join-Path $package 'Chinese Central Vanilla'
+$app = Join-Path $package 'Chinese Central'
 New-Item -ItemType Directory -Path $app | Out-Null
 Push-Location (Join-Path $root 'go')
 try {
-    Run-Tool go @('build', '-ldflags', '-H windowsgui', '-o', (Join-Path $app 'Chinese Central Vanilla Server.exe'), './cmd/central')
+    Run-Tool go @('build', '-ldflags', '-H windowsgui', '-o', (Join-Path $app 'Chinese Central Server.exe'), './cmd/central')
 } finally { Pop-Location }
 
 $native = Join-Path $root 'src-tauri'
@@ -30,7 +30,7 @@ $target = Join-Path $native 'target'
 Push-Location $native
 try { Run-Tool cargo @('build', '--release', '--locked', '--target-dir', $target) }
 finally { Pop-Location }
-Copy-Item -LiteralPath (Join-Path $target 'release/chinese-central-desktop.exe') -Destination (Join-Path $app 'Chinese Central Vanilla.exe')
+Copy-Item -LiteralPath (Join-Path $target 'release/chinese-central-desktop.exe') -Destination (Join-Path $app 'Chinese Central.exe')
 
 foreach ($folder in @('bin', 'dict', 'dict/audio', 'dict/strokes', 'dict/vendor')) {
     New-Item -ItemType Directory -Path (Join-Path $app $folder) -Force | Out-Null
@@ -50,7 +50,7 @@ foreach ($asset in Get-ChildItem -LiteralPath (Join-Path $root 'dict/strokes') -
 Copy-Item -LiteralPath (Join-Path $root 'licenses') -Destination $app -Recurse
 $release = Join-Path $root 'release'
 New-Item -ItemType Directory -Path $release -Force | Out-Null
-$zip = Join-Path $release 'Chinese-Central-Vanilla-Windows-x64.zip'
+$zip = Join-Path $release 'Chinese-Central-Windows-x64.zip'
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 $packageZip = Join-Path $package 'package.zip'
 [IO.Compression.ZipFile]::CreateFromDirectory($app, $packageZip, [IO.Compression.CompressionLevel]::Optimal, $true)
