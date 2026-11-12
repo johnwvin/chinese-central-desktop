@@ -1,4 +1,4 @@
-import { hskVocabulary, levelLabel, studyData, type StudyStatus, type Vocab } from "../hsk/study";
+import { hskVocabulary, levelLabel, STATUS_LABELS, studyData, type StudyStatus, type Vocab } from "../hsk/study";
 import { convertScriptText } from "../read/scriptMode";
 
 let index: Promise<Map<string, Vocab[]>> | undefined;
@@ -13,10 +13,6 @@ function vocabularyIndex() {
     return words;
   }).catch((error) => { index = undefined; throw error; });
 }
-
-const LABELS: Record<StudyStatus, string> = {
-  unlearned: "Unlearned", review: "Review", memorized: "Mastered",
-};
 
 function readingKey(value: string): string {
   return value.toLowerCase().normalize("NFC").replace(/[\s’'·-]/g, "");
@@ -57,7 +53,9 @@ export function dictionaryHsk(section: HTMLElement, list: HTMLElement, words: st
           const select = document.createElement("select");
           select.setAttribute("aria-label", "HSK study status for " + row.word + " " + row.pinyin);
           select.disabled = true;
-          for (const [value, label] of Object.entries(LABELS)) select.add(new Option(label, value));
+          for (const value of ["unlearned", "review", "memorized"] as const) {
+            select.add(new Option(STATUS_LABELS[value], value));
+          }
           select.addEventListener("change", async () => {
             const before = select.dataset.saved ?? "unlearned";
             writing = true;

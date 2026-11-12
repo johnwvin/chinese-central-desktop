@@ -364,7 +364,7 @@ function run(): void {
     while ((node = walker.nextNode())) {
       const text = node as Text;
       if (!/\p{Script=Han}/u.test(text.data)) continue;
-      if (text.parentElement?.closest("a, button, [role='button']")) continue;
+      if (text.parentElement?.closest("a, button, select, [role='button']")) continue;
       pending.push(text);
     }
     pending.forEach((text) => {
@@ -394,7 +394,7 @@ function run(): void {
   const characterLinks = new MutationObserver((records) => {
     records.forEach((record) => {
       record.addedNodes.forEach((added) => {
-        if (added.parentElement?.closest("button, [role='button']")) return;
+        if (added.parentElement?.closest("button, select, [role='button']")) return;
         if (
           added.nodeType === Node.TEXT_NODE &&
           /\p{Script=Han}/u.test(added.textContent || "")

@@ -4,7 +4,7 @@ import { ActionIcon } from "../ui/ActionIcon";
 import { defIn } from "./dict/text";
 import { grammarLabel } from "./hsk/labels";
 import { GrammarBrowser } from "./hsk/GrammarBrowser";
-import { hskList, hskVocabulary, LEVELS, studyData, watchStudy, type Level, type Progress, type StudyData, type StudyStatus, type Vocab } from "./hsk/study";
+import { hskList, hskVocabulary, LEVELS, STATUS_LABELS, studyData, watchStudy, type Level, type Progress, type StudyData, type StudyStatus, type Vocab } from "./hsk/study";
 import "./hsk-prep.css";
 
 type LevelFilter = "selection" | "all" | Level;
@@ -19,7 +19,6 @@ interface Session { cards: Item[]; index: number; flipped: boolean; answers: num
 const KEY = "cc.hsk-prep.review.v1";
 const STATUS_KEY = "cc.hsk-prep.status.v1";
 const LIST_KEY = "cc.hsk-prep.page-size.v1";
-const STATUS_LABELS: Record<StudyStatus, string> = { review: "复习", unlearned: "未学习", memorized: "已掌握" };
 const PAGE_SIZES = [10, 25, 50, 100, 250];
 const MAX_VOCAB_PAGE = 250;
 function readPageSizes(): Record<Kind, number> {

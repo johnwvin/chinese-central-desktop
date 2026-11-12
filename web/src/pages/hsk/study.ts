@@ -1,6 +1,7 @@
 export const LEVELS = ["1", "2", "3", "4", "5", "6", "7-9"] as const;
 export type Level = typeof LEVELS[number];
 export type StudyStatus = "review" | "unlearned" | "memorized";
+export const STATUS_LABELS: Record<StudyStatus, string> = { review: "复习", unlearned: "未学习", memorized: "已掌握" };
 export interface Vocab {
   id: string;
   level: Level;
