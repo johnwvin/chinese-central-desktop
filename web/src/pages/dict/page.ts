@@ -985,12 +985,6 @@ function run(): void {
     // of readings still to be chosen between, for the same reason the pinyin
     // is held back there.
     const hwb = hw.querySelector<HTMLElement>(".hwbox");
-    if (hwb && trad && trad !== simp) {
-      const alternate = document.createElement("div");
-      alternate.className = "dict-traditional";
-      alternate.append("Traditional: ", charLinks(trad));
-      hwb.appendChild(alternate);
-    }
     const hskWords = results
       ? d.entries.filter((entry) => entry.s === d.q || entry.t === d.q).map((entry) => entry.s)
       : [e0?.s ?? d.q];

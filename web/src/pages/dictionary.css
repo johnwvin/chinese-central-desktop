@@ -463,7 +463,6 @@
   line-height: 1; }
 .recentnav button:disabled { opacity: .4;  }
 
-.dict-traditional { margin-top: 4px; font-size: 15px; }
 .dict-senses { margin: 0; padding-inline-start: 1.4em; }
 .dict-senses > li + li { margin-top: 4px; }
 .dict-hsk-item { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 4px 8px; padding: 8px 12px; }
