@@ -1085,18 +1085,6 @@ function run(): void {
       const main = sec("Main");
       main.className += " wide";
       const mt = table(main);
-      const formation = document.createElement("div");
-      for (const character of d.chars) {
-        const details = formationText(character);
-        if (!details) continue;
-        if (d.chars.length > 1) {
-          const heading = document.createElement("div");
-          heading.appendChild(link(character.ch));
-          formation.appendChild(heading);
-        }
-        formation.appendChild(details);
-      }
-      if (formation.childNodes.length) row(mt, "Formation method", formation);
       const senses = entryView?.senses ?? (one ? [defText(d.chars[0].udef)] : []);
       const definitions = document.createElement("ol");
       definitions.className = "dict-senses";
