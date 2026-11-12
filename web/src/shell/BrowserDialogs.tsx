@@ -25,9 +25,12 @@ export function BookmarkDialog({ title, folder, folders, onSave, onClose }: {
   </Modal>;
 }
 
-export function AdBlockDialog({ enabled, rules, onToggle, onPick, onRemove, onClose }: {
+export function AdBlockDialog({ enabled, rules, host, whitelisted, onToggleWhitelist, onToggle, onPick, onRemove, onClose }: {
   enabled: boolean;
   rules: string[];
+  host: string;
+  whitelisted: boolean;
+  onToggleWhitelist: () => void;
   onToggle: () => void;
   onPick: () => void;
   onRemove: (selector: string) => void;
@@ -38,13 +41,16 @@ export function AdBlockDialog({ enabled, rules, onToggle, onPick, onRemove, onCl
     <div className="browser-dialog-fields">
       <h2 id={heading}>Ad blocker</h2>
       <label className="browser-block-switch"><input type="checkbox" checked={enabled} onChange={onToggle} /> Block ads</label>
+      {host && <button className="ccd-btn" type="button" aria-pressed={whitelisted} onClick={onToggleWhitelist}>
+        {whitelisted ? "Unwhitelist " : "Whitelist "}{host}
+      </button>}
       {rules.length > 0 && <ul className="browser-element-rules">
         {rules.map((selector) => <li key={selector}><code title={selector}>{selector}</code>
           <button className="ccd-btn" type="button" aria-label={`Remove filter ${selector}`} title="Remove filter" onClick={() => onRemove(selector)}><ActionIcon name="trash" /></button>
         </li>)}
       </ul>}
       <div className="browser-dialog-actions"><button className="ccd-btn" type="button" onClick={onClose}>Close</button>
-        <button className="ccd-btn go" type="button" disabled={!enabled} onClick={onPick}>Pick element</button></div>
+        <button className="ccd-btn go" type="button" disabled={!enabled || whitelisted} onClick={onPick}>Pick element</button></div>
     </div>
   </Modal>;
 }

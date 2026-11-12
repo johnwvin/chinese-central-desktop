@@ -4,44 +4,37 @@ import { ActionIcon } from "../ui/ActionIcon";
 import { defIn } from "./dict/text";
 import { grammarLabel } from "./hsk/labels";
 import { GrammarBrowser } from "./hsk/GrammarBrowser";
+import { hskList, hskVocabulary, LEVELS, studyData, watchStudy, type Level, type Progress, type StudyData, type StudyStatus, type Vocab } from "./hsk/study";
 import "./hsk-prep.css";
 
-type Level = "1" | "2" | "3" | "4" | "5" | "6" | "7-9";
 type LevelFilter = "selection" | "all" | Level;
 type LevelSort = "auto" | "source" | "category" | "asc" | "desc";
 type Kind = "vocabulary" | "grammar";
-type StudyStatus = "review" | "unlearned" | "memorized";
-interface Vocab { id: string; level: Level; word: string; label: string; pinyin: string; meaning: string; pos?: string; levelNote: string; page: number; glossSource?: string }
 interface GrammarExample { chinese: string; pinyin?: string; english?: string }
 interface Grammar { id: string; level: Level; path: string[]; title?: string; content: string[]; pages?: number[]; explanation: string | string[]; examples?: GrammarExample[] }
 interface Source { title: string; website: string; url: string; published: string; effective: string; retrieved: string }
 interface Data { vocabulary: Vocab[]; grammar: Grammar[]; source: Source }
-interface Review { due: number; streak: number; seen: number; known: boolean }
-type Progress = Record<string, Review>;
-type StudyData = { statuses: Record<string, StudyStatus>; progress: Progress };
 type Item = { kind: "vocabulary"; value: Vocab } | { kind: "grammar"; value: Grammar };
 interface Session { cards: Item[]; index: number; flipped: boolean; answers: number }
-const LEVELS: Level[] = ["1", "2", "3", "4", "5", "6", "7-9"];
 const KEY = "cc.hsk-prep.review.v1";
 const STATUS_KEY = "cc.hsk-prep.status.v1";
 const LIST_KEY = "cc.hsk-prep.page-size.v1";
-const STATUS_LABELS: Record<StudyStatus, string> = { review: "复习", unlearned: "未学习", memorized: "已记住" };
+const STATUS_LABELS: Record<StudyStatus, string> = { review: "复习", unlearned: "未学习", memorized: "已掌握" };
 const PAGE_SIZES = [10, 25, 50, 100, 250];
+const MAX_VOCAB_PAGE = 250;
 function readPageSizes(): Record<Kind, number> {
   try {
     const saved = JSON.parse(localStorage.getItem(LIST_KEY) ?? "{}");
     const valid = (n: unknown) => typeof n === "number" && Number.isInteger(n) && n >= 0;
-    return { vocabulary: valid(saved?.vocabulary) ? saved.vocabulary : 50, grammar: valid(saved?.grammar) ? saved.grammar : 50 };
+    return { vocabulary: valid(saved?.vocabulary) ? Math.min(saved.vocabulary || MAX_VOCAB_PAGE, MAX_VOCAB_PAGE) : 50, grammar: valid(saved?.grammar) ? saved.grammar : 50 };
   } catch { return { vocabulary: 50, grammar: 50 }; }
 }
 
 let loading: Promise<Data> | undefined;
 function load(): Promise<Data> {
-  if (!loading) loading = Promise.all(["vocabulary", "grammar", "source"].map(async (name) => {
-    const res = await fetch(`/hsk/${name}.json`);
-    if (!res.ok) throw new Error("The HSK lists could not be loaded.");
-    return res.json();
-  })).then(([vocabulary, grammar, source]) => ({ vocabulary, grammar, source })).catch((e) => { loading = undefined; throw e; });
+  if (!loading) loading = Promise.all([hskVocabulary(), hskList<Grammar[]>("grammar"), hskList<Source>("source")])
+    .then(([vocabulary, grammar, source]) => ({ vocabulary, grammar, source }))
+    .catch((error) => { loading = undefined; throw error; });
   return loading;
 }
 function readProgress(): Progress {
@@ -58,15 +51,6 @@ function readStatuses(): Record<string, StudyStatus> {
     if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
     return Object.fromEntries(Object.entries(raw).filter(([, value]) => value === "review" || value === "unlearned" || value === "memorized")) as Record<string, StudyStatus>;
   } catch { return {}; }
-}
-async function studyData(patch?: Partial<StudyData> & { fillMissing?: boolean }): Promise<StudyData> {
-  const response = await fetch("/api/central/hsk-study", patch && {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(patch),
-  });
-  if (!response.ok) throw new Error("Could not access saved HSK study data.");
-  return response.json();
 }
 function shuffled<T>(values: T[]): T[] {
   const result = values.slice();
@@ -112,8 +96,8 @@ function Pattern({ point }: { point: Grammar }) {
   </>;
 }
 
-function Pagination({ total, perPage, page, onSize, onPage, position }: {
-  total: number; perPage: number; page: number; onSize: (n: number) => void; onPage: (n: number) => void; position: string;
+function Pagination({ total, perPage, page, onSize, onPage, position, maxSize }: {
+  total: number; perPage: number; page: number; onSize: (n: number) => void; onPage: (n: number) => void; position: string; maxSize?: number;
 }) {
   const [custom, setCustom] = useState(false);
   const [draft, setDraft] = useState(String(perPage || 50));
@@ -128,9 +112,9 @@ function Pagination({ total, perPage, page, onSize, onPage, position }: {
     <label><select aria-label="Items per page" title="Items per page" value={isCustom ? "custom" : String(perPage)} onChange={(e) => {
       if (e.target.value === "custom") { setCustom(true); return; }
       setCustom(false); onSize(Number(e.target.value));
-    }}>{PAGE_SIZES.map((n) => <option key={n} value={n}>{n}</option>)}<option value={0}>All</option><option value="custom">Custom</option></select></label>
-    {isCustom && <form onSubmit={(e) => { e.preventDefault(); const n = Number(draft); if (Number.isSafeInteger(n) && n > 0) { onSize(n); setCustom(false); } }}>
-      <input aria-label="Custom items per page" type="number" min={1} step={1} required value={draft} onChange={(e) => setDraft(e.target.value)} /><button className="btn plain" type="submit" title="Apply page size" aria-label="Apply page size"><ActionIcon name="check" /></button>
+    }}>{PAGE_SIZES.map((n) => <option key={n} value={n}>{n}</option>)}{!maxSize && <option value={0}>All</option>}<option value="custom">Custom</option></select></label>
+    {isCustom && <form onSubmit={(e) => { e.preventDefault(); const n = Number(draft); if (Number.isSafeInteger(n) && n > 0 && (!maxSize || n <= maxSize)) { onSize(n); setCustom(false); } }}>
+      <input aria-label="Custom items per page" type="number" min={1} max={maxSize} step={1} required value={draft} onChange={(e) => setDraft(e.target.value)} /><button className="btn plain" type="submit" title="Apply page size" aria-label="Apply page size"><ActionIcon name="check" /></button>
     </form>}
     <div className="hsk-page-navigation">
       <button className="btn plain" type="button" aria-label="First page" disabled={page === 0} onClick={() => onPage(0)} title="First page"><ActionIcon name="first" /></button>
@@ -148,19 +132,20 @@ export function HskPrep() {
   const [data, setData] = useState<Data | null>(null);
   const [error, setError] = useState("");
   const [retry, setRetry] = useState(0);
-  const [level, setLevel] = useState<Level>("1");
+  const [initial] = useState(() => new URLSearchParams(location.search));
+  const [level, setLevel] = useState<Level>(() => LEVELS.find((value) => value === initial.get("level")) ?? "1");
   const [kind, setKind] = useState<Kind>("vocabulary");
   const [cumulative, setCumulative] = useState(false);
   const [levelFilter, setLevelFilter] = useState<LevelFilter>("selection");
   const [levelSort, setLevelSort] = useState<LevelSort>("auto");
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(() => initial.get("word") ?? "");
   const [page, setPage] = useState(0);
   const [pageSizes, setPageSizes] = useState(readPageSizes);
   const [progress, setProgress] = useState<Progress>({});
   const [statuses, setStatuses] = useState<Record<string, StudyStatus>>({});
   const writes = useRef(Promise.resolve());
   const grading = useRef(false);
-  const [statusFilter, setStatusFilter] = useState<StudyStatus | "all">("unlearned");
+  const [statusFilter, setStatusFilter] = useState<StudyStatus | "all">(() => initial.has("word") ? "all" : "unlearned");
   const [saveError, setSaveError] = useState("");
   const [session, setSession] = useState<Session | null>(null);
   const [count, setCount] = useState(20);
@@ -191,8 +176,8 @@ export function HskPrep() {
         setProgress(study.progress);
       }).catch(() => { if (live) setSaveError("Could not refresh saved HSK study data."); });
     };
-    window.addEventListener("focus", sync);
-    return () => { live = false; window.removeEventListener("focus", sync); };
+    const unwatch = watchStudy(sync);
+    return () => { live = false; unwatch(); };
   }, []);
   useEffect(() => {
     const close = (event: PointerEvent) => {
@@ -205,19 +190,31 @@ export function HskPrep() {
     return () => { document.removeEventListener("pointerdown", close); document.removeEventListener("keydown", escape); };
   }, []);
 
-  const matchingItems = useMemo<Item[]>(() => {
-    if (!data) return [];
+  const indexedItems = useMemo(() => {
+    const index = new Map<Level, { item: Item; search: string }[]>();
+    for (const itemLevel of LEVELS) index.set(itemLevel, []);
+    const add = (item: Item, text: string) => index.get(item.value.level)?.push({ item, search: folded(text) });
+    if (kind === "vocabulary") {
+      data?.vocabulary.forEach((value) => add({ kind, value }, [value.word, value.pinyin, value.meaning].join(" ")));
+    } else {
+      data?.grammar.forEach((value) => add({ kind, value }, [
+        title(value), ...value.path, ...value.content,
+        Array.isArray(value.explanation) ? value.explanation.join(" ") : value.explanation,
+        value.examples?.map((example) => [example.chinese, example.pinyin, example.english].join(" ")).join(" "),
+      ].join(" ")));
+    }
+    return index;
+  }, [data, kind]);
+
+  const matchingItems = useMemo(() => {
     const allowed = levelFilter === "all" ? LEVELS : levelFilter === "selection"
       ? cumulative ? LEVELS.slice(0, LEVELS.indexOf(level) + 1) : [level]
       : [levelFilter];
     const search = folded(query);
-    const all: Item[] = kind === "vocabulary"
-      ? data.vocabulary.map((value) => ({ kind: "vocabulary", value }))
-      : data.grammar.map((value) => ({ kind: "grammar", value }));
-    return all.filter((item) => allowed.includes(item.value.level) && (!search || folded(item.kind === "vocabulary"
-      ? `${item.value.word} ${item.value.pinyin} ${item.value.meaning}`
-      : `${title(item.value)} ${item.value.path.join(" ")} ${item.value.content.join(" ")} ${Array.isArray(item.value.explanation) ? item.value.explanation.join(" ") : item.value.explanation} ${item.value.examples?.map((x) => `${x.chinese} ${x.pinyin ?? ""} ${x.english ?? ""}`).join(" ") ?? ""}`).includes(search)));
-  }, [data, level, kind, cumulative, levelFilter, query]);
+    return allowed.flatMap((itemLevel) => (indexedItems.get(itemLevel) ?? [])
+      .filter((entry) => !search || entry.search.includes(search))
+      .map((entry) => entry.item));
+  }, [indexedItems, level, cumulative, levelFilter, query]);
   const items = useMemo(() => {
     const filtered = statusFilter === "all" ? matchingItems : matchingItems.filter((item) => (statuses[item.value.id] ?? "unlearned") === statusFilter);
     const sort = levelSort === "auto" ? (kind === "grammar" ? "category" : "source") : levelSort;
@@ -228,7 +225,7 @@ export function HskPrep() {
   }, [matchingItems, statusFilter, statuses, levelSort, kind]);
   const now = Date.now();
   const reviewItems = matchingItems.filter((item) => statuses[item.value.id] === "review");
-  const learnedItems = matchingItems.filter((item) => statuses[item.value.id] === "memorized");
+  const masteredItems = matchingItems.filter((item) => statuses[item.value.id] === "memorized");
   const due = reviewItems.filter((item) => !progress[item.value.id] || progress[item.value.id].due <= now);
   const perPage = pageSizes[kind];
   const size = perPage || Math.max(1, items.length);
@@ -262,7 +259,7 @@ export function HskPrep() {
     const rect = event.currentTarget.getBoundingClientRect();
     setTableMenu({ top: Math.min(rect.bottom + 4, window.innerHeight - 250), left: Math.max(8, Math.min(rect.left, window.innerWidth - 266)) });
   }
-  const pagination = (position: string) => <Pagination total={items.length} perPage={perPage} page={page} onSize={changePageSize} onPage={setPage} position={position} />;
+  const pagination = (position: string) => <Pagination total={items.length} perPage={perPage} page={page} onSize={changePageSize} onPage={setPage} position={position} maxSize={MAX_VOCAB_PAGE} />;
   function startReview(pool: Item[]) {
     setSession({ cards: shuffled(pool).slice(0, count || pool.length), index: 0, flipped: false, answers: 0 });
   }
@@ -317,8 +314,8 @@ export function HskPrep() {
             <button type="button" disabled={!reviewItems.length} onClick={() => { setReviewMenuOpen(false); startReview(reviewItems); }}>
               全部闪卡 <span>{reviewItems.length.toLocaleString()}</span>
             </button>
-            <button type="button" disabled={!learnedItems.length} onClick={() => { setReviewMenuOpen(false); startReview(learnedItems); }}>
-              已记住 <span>{learnedItems.length.toLocaleString()}</span>
+            <button type="button" disabled={!masteredItems.length} onClick={() => { setReviewMenuOpen(false); startReview(masteredItems); }}>
+              已掌握 <span>{masteredItems.length.toLocaleString()}</span>
             </button>
           </div>
         </details>

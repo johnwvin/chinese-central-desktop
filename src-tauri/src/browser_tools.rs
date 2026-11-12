@@ -1,7 +1,6 @@
 use std::collections::BTreeMap;
 use std::fs;
 use std::path::Path;
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use tauri::{Url, Webview};
 use webview2_com::Microsoft::Web::WebView2::Win32::*;
@@ -12,7 +11,7 @@ use webview2_com::{
 use windows::core::{w, Interface, PCWSTR};
 use windows::Win32::System::Com::IStream;
 
-use super::allowed;
+use super::{allowed, AdSettings};
 
 type Rules = BTreeMap<String, Vec<String>>;
 static FILE_LOCK: Mutex<()> = Mutex::new(());
@@ -93,8 +92,14 @@ pub fn apply(browser: &ICoreWebView2, path: &Path, enabled: bool) {
     let _ = unsafe { browser.ExecuteScript(PCWSTR(wide.as_ptr()), None::<&ICoreWebView2ExecuteScriptCompletedHandler>) };
 }
 
-pub fn pick(browser: &ICoreWebView2, path: std::path::PathBuf, enabled: Arc<AtomicBool>, shell: Webview, tab_id: u64) {
+pub fn apply_for_site(browser: &ICoreWebView2, path: &Path, settings: &AdSettings) {
+    let enabled = current_host(browser).is_some_and(|host| settings.blocks_on(&host));
+    apply(browser, path, enabled);
+}
+
+pub fn pick(browser: &ICoreWebView2, path: std::path::PathBuf, settings: Arc<AdSettings>, shell: Webview, tab_id: u64) {
     let Some(host) = current_host(browser) else { return };
+    if !settings.blocks_on(&host) { return; }
     let args = serde_json::json!({
         "expression": include_str!("browser-element-picker.js"),
         "awaitPromise": true,
@@ -110,7 +115,7 @@ pub fn pick(browser: &ICoreWebView2, path: std::path::PathBuf, enabled: Arc<Atom
         let result: serde_json::Value = serde_json::from_str(&result).unwrap_or_default();
         if let Some(selector) = result["result"]["value"].as_str() {
             match change(&path, &host, selector, true) {
-                Ok(_) => apply(&target, &path, enabled.load(Ordering::Relaxed)),
+                Ok(_) => apply_for_site(&target, &path, &settings),
                 Err(error) => event(&result_shell, tab_id, "error", &error),
             }
         }
@@ -125,14 +130,14 @@ pub unsafe fn install(
     browser: &ICoreWebView2,
     environment: &ICoreWebView2Environment,
     path: std::path::PathBuf,
-    enabled: Arc<AtomicBool>,
+    settings: Arc<AdSettings>,
     shell: Webview,
     tab_id: u64,
 ) -> windows::core::Result<()> {
     let mut token = 0;
     let navigation = NavigationCompletedEventHandler::create(Box::new(move |sender, _| {
         if let Some(browser) = sender {
-            apply(&browser, &path, enabled.load(Ordering::Relaxed));
+            apply_for_site(&browser, &path, &settings);
         }
         Ok(())
     }));

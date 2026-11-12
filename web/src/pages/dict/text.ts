@@ -50,15 +50,16 @@ export function entryDisplay(e: { s: string; t: string; d: string[] }, script: s
       if (distinct) head = distinct;
     }
   }
-  const definition = raw.replace(refs, (_all, reference: string) => {
+  const senses = e.d.map((sense) => sense.replace(refs, (_all, reference: string) => {
     const forms = reference.split("|");
     const preferred = targetIn(forms);
     const target = preferred === head ? forms.find((form) => form !== head) || preferred : preferred;
     return "variant of " + target;
-  });
+  })).map((sense) => defIn(sense, script));
   return {
     head,
-    definition: defIn(definition, script),
+    senses,
+    definition: senses.join("; "),
     variantOnly: e.d.length > 0 && e.d.every((field) => /\bvariant of\s/i.test(field)),
   };
 }

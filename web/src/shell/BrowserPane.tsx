@@ -6,6 +6,21 @@ import { ActionIcon } from "../ui/ActionIcon";
 
 const GOOGLE = "https://www.google.com/";
 const AD_BLOCK_KEY = "cc-browser-ad-blocking";
+const AD_WHITELIST_KEY = "cc-browser-ad-whitelist";
+
+function readAdWhitelist(): string[] {
+  try {
+    const hosts: unknown = JSON.parse(localStorage.getItem(AD_WHITELIST_KEY) ?? "[]");
+    return Array.isArray(hosts) ? hosts.filter((host): host is string => typeof host === "string") : [];
+  } catch { return []; }
+}
+
+function websiteHost(value: string): string {
+  try {
+    const url = new URL(value);
+    return /^https?:$/.test(url.protocol) ? url.hostname.replace(/\.$/, "") : "";
+  } catch { return ""; }
+}
 const BLOCK_CHANGE = "cc-browser-blocking";
 const OVERLAYS = "#menu.open, .tabmenu, .volpop, .ccd-scrim";
 
@@ -55,6 +70,9 @@ export function BrowserPane({ tabId, shown, style, onClose, initialUrl, onLocati
   const [bookmark, setBookmark] = useState<{ url: string; title: string } & ReturnType<typeof bookmarkDetails> | null>(null);
   const [rules, setRules] = useState<string[] | null>(null);
   const [bookmarked, setBookmarked] = useState(() => hasBookmark(location.url));
+  const [whitelist, setWhitelist] = useState(readAdWhitelist);
+  const currentHost = websiteHost(location.url);
+  const whitelisted = whitelist.includes(currentHost);
   const [blockAds, setBlockAds] = useState(() => localStorage.getItem(AD_BLOCK_KEY) !== "false");
 
   useEffect(() => { locationCallback.current = onLocationChange; }, [onLocationChange]);
@@ -80,8 +98,10 @@ export function BrowserPane({ tabId, shown, style, onClose, initialUrl, onLocati
     };
     const blockChanged = () => {
       const enabled = localStorage.getItem(AD_BLOCK_KEY) !== "false";
+      const adWhitelist = readAdWhitelist();
       setBlockAds(enabled);
-      void browserCommand(tabId, "refresh-element-rules", { blockAds: enabled }).catch(() => {});
+      setWhitelist(adWhitelist);
+      void browserCommand(tabId, "refresh-element-rules", { blockAds: enabled, adWhitelist }).catch(() => {});
     };
     window.addEventListener("cc-browser-location", changed);
     window.addEventListener(BLOCK_CHANGE, blockChanged);
@@ -124,7 +144,7 @@ export function BrowserPane({ tabId, shown, style, onClose, initialUrl, onLocati
       const key = JSON.stringify(bounds);
       if (key === placement.current) return;
       placement.current = key;
-      void browserCommand(tabId, "place", { bounds, url: initialUrl, blockAds: localStorage.getItem(AD_BLOCK_KEY) !== "false" })
+      void browserCommand(tabId, "place", { bounds, url: initialUrl, blockAds: localStorage.getItem(AD_BLOCK_KEY) !== "false", adWhitelist: readAdWhitelist() })
         .catch((cause) => { if (alive) setError(String(cause)); });
     };
     const schedule = () => {
@@ -183,7 +203,7 @@ export function BrowserPane({ tabId, shown, style, onClose, initialUrl, onLocati
         }}><ActionIcon name="star" /></button>
       <button type="button" title="Bookmarks" aria-label="Bookmarks" aria-expanded={bookmarksOpen}
         onClick={() => setBookmarksOpen((open) => !open)}><ActionIcon name="bookmark" /></button>
-      <button type="button" className="browser-ad-block" aria-pressed={blockAds} aria-haspopup="dialog" aria-label="Ad blocker" title={blockAds ? "Ad blocker on" : "Ad blocker off"} onClick={() => {
+      <button type="button" className="browser-ad-block" aria-pressed={blockAds && !whitelisted} aria-haspopup="dialog" aria-label="Ad blocker" title={whitelisted ? "Site whitelisted" : blockAds ? "Ad blocker on" : "Ad blocker off"} onClick={() => {
         void browserCommand<string[]>(tabId, "list-element-rules").then((saved) => setRules(saved ?? [])).catch((cause) => setError(String(cause)));
       }}><ActionIcon name="shield" /><span className="browser-status-dot" /></button>
     </form>
@@ -200,7 +220,17 @@ export function BrowserPane({ tabId, shown, style, onClose, initialUrl, onLocati
         try { bookmarkPage(bookmark.url, name, folder); setBookmark(null); setError(""); }
         catch (cause) { setBookmark(null); setError(String(cause)); }
       }} />}
-    {rules && <AdBlockDialog enabled={blockAds} rules={rules} onClose={() => setRules(null)}
+    {rules && <AdBlockDialog enabled={blockAds} rules={rules} host={currentHost} whitelisted={whitelisted} onClose={() => setRules(null)}
+      onToggleWhitelist={() => {
+        if (!currentHost) return;
+        const sites = new Set(readAdWhitelist());
+        if (sites.has(currentHost)) sites.delete(currentHost);
+        else sites.add(currentHost);
+        const adWhitelist = [...sites];
+        localStorage.setItem(AD_WHITELIST_KEY, JSON.stringify(adWhitelist));
+        window.dispatchEvent(new Event(BLOCK_CHANGE));
+        run("reload", { adWhitelist });
+      }}
       onToggle={() => {
         localStorage.setItem(AD_BLOCK_KEY, String(!blockAds));
         window.dispatchEvent(new Event(BLOCK_CHANGE));

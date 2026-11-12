@@ -462,3 +462,11 @@
   border-radius: 8px; color: var(--yb-chiptext); padding: 5px 11px;
   line-height: 1; }
 .recentnav button:disabled { opacity: .4;  }
+
+.dict-traditional { margin-top: 4px; font-size: 15px; }
+.dict-senses { margin: 0; padding-inline-start: 1.4em; }
+.dict-senses > li + li { margin-top: 4px; }
+.dict-hsk-item { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 4px 8px; padding: 8px 12px; }
+.dict-hsk-item + .dict-hsk-item { border-top: 1px solid var(--yb-bd-soft); }
+.dict-hsk-item > div { grid-column: 1 / -1; }
+.dict-hsk-item select { min-width: 0; max-width: 100%; }

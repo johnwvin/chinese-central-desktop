@@ -1,14 +1,14 @@
 use serde::Deserialize;
 use std::collections::HashSet;
 use std::net::IpAddr;
-use std::sync::{atomic::{AtomicBool, Ordering}, mpsc, Arc, OnceLock};
+use std::sync::{atomic::{AtomicBool, Ordering}, mpsc, Arc, Mutex, OnceLock, RwLock};
 use std::time::Duration;
 use tauri::webview::{NewWindowResponse, WebviewBuilder};
 use tauri::{LogicalPosition, LogicalSize, Manager, Rect, Url, Webview, WebviewUrl};
 use webview2_com::Microsoft::Web::WebView2::Win32::*;
 use webview2_com::{
     take_pwstr, AcceleratorKeyPressedEventHandler, DocumentTitleChangedEventHandler, HistoryChangedEventHandler,
-    SourceChangedEventHandler, WebResourceRequestedEventHandler,
+    NavigationStartingEventHandler, SourceChangedEventHandler, WebResourceRequestedEventHandler,
 };
 use windows::core::{w, Interface};
 use windows::Win32::System::Com::IStream;
@@ -27,11 +27,26 @@ pub struct Bounds {
     height: f64,
 }
 
-pub struct BrowserSettings(Arc<AtomicBool>);
+struct AdSettings {
+    enabled: AtomicBool,
+    whitelist: RwLock<HashSet<String>>,
+}
+
+impl AdSettings {
+    fn blocks_on(&self, host: &str) -> bool {
+        self.enabled.load(Ordering::Relaxed)
+            && !self.whitelist.read().is_ok_and(|sites| sites.contains(host.trim_end_matches('.')))
+    }
+}
+
+pub struct BrowserSettings(Arc<AdSettings>);
 
 impl Default for BrowserSettings {
     fn default() -> Self {
-        Self(Arc::new(AtomicBool::new(true)))
+        Self(Arc::new(AdSettings {
+            enabled: AtomicBool::new(true),
+            whitelist: RwLock::new(HashSet::new()),
+        }))
     }
 }
 
@@ -96,7 +111,7 @@ fn report_location(shell: &Webview, tab_id: u64, browser: &ICoreWebView2) {
     let _ = shell.eval(format!("window.dispatchEvent(new CustomEvent('cc-browser-location', {{detail: {detail}}}));"));
 }
 
-fn configure(view: &Webview, shell: Webview, tab_id: u64, block_ads: Arc<AtomicBool>, rule_path: std::path::PathBuf) -> Result<(), String> {
+fn configure(view: &Webview, shell: Webview, tab_id: u64, settings: Arc<AdSettings>, rule_path: std::path::PathBuf) -> Result<(), String> {
     let (send, receive) = mpsc::sync_channel(1);
     view.with_webview(move |platform| {
         let result = (|| -> windows::core::Result<()> {
@@ -105,7 +120,7 @@ fn configure(view: &Webview, shell: Webview, tab_id: u64, block_ads: Arc<AtomicB
             unsafe {
                 let browser = controller.CoreWebView2()?;
                 browser.Settings()?.SetIsWebMessageEnabled(false)?;
-                tools::install(&browser, &environment, rule_path, block_ads.clone(), shell.clone(), tab_id)?;
+                tools::install(&browser, &environment, rule_path, settings.clone(), shell.clone(), tab_id)?;
                 if let Ok(modern) = browser.cast::<ICoreWebView2_22>() {
                     modern.AddWebResourceRequestedFilterWithRequestSourceKinds(
                         w!("*"), COREWEBVIEW2_WEB_RESOURCE_CONTEXT_ALL, COREWEBVIEW2_WEB_RESOURCE_REQUEST_SOURCE_KINDS_ALL,
@@ -114,12 +129,27 @@ fn configure(view: &Webview, shell: Webview, tab_id: u64, block_ads: Arc<AtomicB
                     browser.AddWebResourceRequestedFilter(w!("*"), COREWEBVIEW2_WEB_RESOURCE_CONTEXT_ALL)?;
                 }
                 let mut token = 0;
+                let page_host = Arc::new(Mutex::new(String::new()));
+                let navigating = page_host.clone();
+                let navigation = NavigationStartingEventHandler::create(Box::new(move |_, args| {
+                    if let Some(args) = args {
+                        let mut uri = Default::default();
+                        args.Uri(&mut uri)?;
+                        if let Ok(mut host) = navigating.lock() {
+                            *host = Url::parse(&take_pwstr(uri)).ok()
+                                .and_then(|url| url.host_str().map(str::to_owned)).unwrap_or_default();
+                        }
+                    }
+                    Ok(())
+                }));
+                browser.add_NavigationStarting(&navigation, &mut token)?;
                 let requests = WebResourceRequestedEventHandler::create(Box::new(move |_, args| {
                     let Some(args) = args else { return Ok(()) };
                     let mut uri = Default::default();
                     args.Request()?.Uri(&mut uri)?;
                     let Ok(url) = Url::parse(&take_pwstr(uri)) else { return Ok(()) };
-                    let blocked = local_host(&url) || (block_ads.load(Ordering::Relaxed) && url.host_str().is_some_and(ad_host));
+                    let block_ads = page_host.lock().is_ok_and(|host| settings.blocks_on(&host));
+                    let blocked = local_host(&url) || (block_ads && url.host_str().is_some_and(ad_host));
                     if blocked {
                         let response = environment.CreateWebResourceResponse(
                             None::<&IStream>, 403, w!("Blocked"), w!("Content-Type: text/plain"),
@@ -180,6 +210,7 @@ pub async fn browser_tab(
     bounds: Option<Bounds>,
     url: Option<String>,
     block_ads: Option<bool>,
+    ad_whitelist: Option<Vec<String>>,
     selector: Option<String>,
 ) -> Result<Option<Vec<String>>, String> {
     if webview.label() != "main" {
@@ -189,7 +220,10 @@ pub async fn browser_tab(
     let label = format!("browser-{tab_id}");
     let existing = app.get_webview(&label);
     if let Some(enabled) = block_ads {
-        settings.0.store(enabled, Ordering::Relaxed);
+        settings.0.enabled.store(enabled, Ordering::Relaxed);
+    }
+    if let Some(hosts) = ad_whitelist {
+        *settings.0.whitelist.write().map_err(|error| error.to_string())? = hosts.into_iter().collect();
     }
     let rule_path = app.path().app_local_data_dir().map_err(|e| e.to_string())?.join("browser-element-filters.json");
 
@@ -244,7 +278,7 @@ pub async fn browser_tab(
             return tools::list(&rule_path, host).map(Some);
         }
         let rules = tools::change(&rule_path, host, selector.as_deref().unwrap_or_default(), false)?;
-        let enabled = settings.0.load(Ordering::Relaxed);
+        let enabled = settings.0.blocks_on(host);
         view.with_webview(move |platform| unsafe {
             if let Ok(browser) = platform.controller().CoreWebView2() {
                 tools::apply(&browser, &rule_path, enabled);
@@ -252,7 +286,7 @@ pub async fn browser_tab(
         }).map_err(|e| e.to_string())?;
         return Ok(Some(rules));
     }
-    let enabled = settings.0.clone();
+    let ad_settings = settings.0.clone();
     match action.as_str() {
         "close" => view.close(),
         "reload" => view.reload(),
@@ -260,11 +294,9 @@ pub async fn browser_tab(
         "pick-element" | "refresh-element-rules" => view.with_webview(move |platform| unsafe {
             if let Ok(browser) = platform.controller().CoreWebView2() {
                 if action == "pick-element" {
-                    if enabled.load(Ordering::Relaxed) {
-                        tools::pick(&browser, rule_path, enabled, webview, tab_id);
-                    }
+                    tools::pick(&browser, rule_path, ad_settings, webview, tab_id);
                 } else {
-                    tools::apply(&browser, &rule_path, enabled.load(Ordering::Relaxed));
+                    tools::apply_for_site(&browser, &rule_path, &ad_settings);
                 }
             }
         }),

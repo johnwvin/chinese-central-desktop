@@ -12,6 +12,8 @@
  */
 import type { CharInfo, DictData, Entry, Related, TreeNode } from "./types";
 import { defIn, entryDisplay } from "./text";
+import { dictionaryHsk } from "./hsk";
+import { watchStudy } from "../hsk/study";
 import { pinyinPieces, pyPlaySeq } from "./pinyin";
 import { convertScriptText } from "../read/scriptMode";
 import {
@@ -45,6 +47,8 @@ function run(): void {
   const el = <T extends Element = HTMLElement>(s: string) =>
     document.querySelector(s) as T;
   let DATA: DictData | null = null;
+  let refreshHsk: (() => void) | undefined;
+  watchStudy(() => refreshHsk?.());
   let TAB = "word";
   let MODE = "animate";
   let SPEED = 1;
@@ -895,6 +899,7 @@ function run(): void {
     putUrl();
   }
   function renderWord(d: DictData): void {
+    refreshHsk = undefined;
     const pane = el("#pane-word");
     pane.innerHTML = "";
     if (!d.entries.length && !d.chars.length) {
@@ -980,6 +985,23 @@ function run(): void {
     // of readings still to be chosen between, for the same reason the pinyin
     // is held back there.
     const hwb = hw.querySelector<HTMLElement>(".hwbox");
+    if (hwb && trad && trad !== simp) {
+      const alternate = document.createElement("div");
+      alternate.className = "dict-traditional";
+      alternate.append("Traditional: ", charLinks(trad));
+      hwb.appendChild(alternate);
+    }
+    const hskWords = results
+      ? d.entries.filter((entry) => entry.s === d.q || entry.t === d.q).map((entry) => entry.s)
+      : [e0?.s ?? d.q];
+    if (hskWords.length) {
+      const section = sec("HSK Prep");
+      section.hidden = true;
+      const list = document.createElement("div");
+      section.appendChild(list);
+      left.appendChild(section);
+      refreshHsk = dictionaryHsk(section, list, hskWords, results ? undefined : e0?.p);
+    }
     if (hwb && !results) {
       hwb.classList.add("has-star");
       hwb.appendChild(
@@ -1063,28 +1085,32 @@ function run(): void {
       const main = sec("Main");
       main.className += " wide";
       const mt = table(main);
-      if (e0) {
-        const defs = document.createElement("span");
-        const p = document.createElement("div");
-        p.className = "quiet";
-        p.appendChild(pyEl(e0.p));
-        defs.appendChild(p);
-        defs.appendChild(document.createTextNode(entryView!.definition));
-        row(mt, "English Definition", defs);
-      } else if (d.chars.length === 1) {
-        // A word with no entry of its own explains itself through its
-        // decomposition; a lone character's Unihan gloss still helps.
-        row(mt, "English Definition", defText(d.chars[0].udef));
+      const formation = document.createElement("div");
+      for (const character of d.chars) {
+        const details = formationText(character);
+        if (!details) continue;
+        if (d.chars.length > 1) {
+          const heading = document.createElement("div");
+          heading.appendChild(link(character.ch));
+          formation.appendChild(heading);
+        }
+        formation.appendChild(details);
       }
+      if (formation.childNodes.length) row(mt, "Formation method", formation);
+      const senses = entryView?.senses ?? (one ? [defText(d.chars[0].udef)] : []);
+      const definitions = document.createElement("ol");
+      definitions.className = "dict-senses";
+      for (const sense of senses) {
+        if (!sense) continue;
+        const item = document.createElement("li");
+        item.textContent = sense;
+        definitions.appendChild(item);
+      }
+      if (definitions.childNodes.length) row(mt, "Definitions", definitions);
       measureRow(mt);
       if (one) {
         const c0 = d.chars[0];
         row(mt, "Frequency Rank", c0.rank ? "#" + c0.rank : "");
-        /* No HSK level here. It is a fact about the character and this table
-           is about the entry you opened -- 帖 has three of them and one HSK
-           number, so whichever you opened was told it was HSK 6. The
-           Character tab has it, beside the other numbers that belong to a
-           character rather than to a meaning. */
       }
       if (mt.childNodes.length) cards.appendChild(main);
       if (d.entries.length > 1) {
