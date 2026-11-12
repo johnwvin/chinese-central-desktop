@@ -463,6 +463,17 @@ function run(): void {
     s.appendChild(t);
     return t;
   }
+  function senseList(senses: string[]): HTMLOListElement {
+    const list = document.createElement("ol");
+    list.className = "dict-senses";
+    for (const sense of senses) {
+      if (!sense) continue;
+      const item = document.createElement("li");
+      item.textContent = sense;
+      list.appendChild(item);
+    }
+    return list;
+  }
   function row(
     t: HTMLTableElement,
     label: string | Node,
@@ -1032,9 +1043,8 @@ function run(): void {
           const py = document.createElement("span");
           py.className = "word-part-pinyin";
           py.appendChild(pyEl(entry.p));
-          const definition = document.createElement("span");
-          definition.className = "word-part-definition";
-          definition.textContent = defText(entry.d.join("; "));
+          const definition = senseList(entry.d.map(defText));
+          definition.classList.add("word-part-definition");
           item.append(py, definition);
           block.appendChild(item);
         });
@@ -1080,14 +1090,7 @@ function run(): void {
       main.className += " wide";
       const mt = table(main);
       const senses = entryView?.senses ?? (one ? [defText(d.chars[0].udef)] : []);
-      const definitions = document.createElement("ol");
-      definitions.className = "dict-senses";
-      for (const sense of senses) {
-        if (!sense) continue;
-        const item = document.createElement("li");
-        item.textContent = sense;
-        definitions.appendChild(item);
-      }
+      const definitions = senseList(senses);
       if (definitions.childNodes.length) row(mt, "Definitions", definitions);
       measureRow(mt);
       if (one) {
