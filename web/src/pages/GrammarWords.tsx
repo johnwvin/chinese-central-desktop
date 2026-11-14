@@ -118,7 +118,7 @@ export function GrammarWords() {
                 setQuery("");
               }}>×</button>}
             </span>
-            <button className="btn" type="button" title="Flashcard test" aria-label="Flashcard test"
+            <button className="grammar-test-button" type="button" title="Flashcard test" aria-label="Flashcard test"
               disabled={rows.length === 0} onClick={() => setTestCards(rows)}>闪卡</button>
           </div>
           {rows.length === 0 && <p role="status">No matching terms.</p>}

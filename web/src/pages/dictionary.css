@@ -52,17 +52,48 @@
    line instead. */
 .d-qwrap { position: relative; display: flex; flex: 1 1 280px;
   min-width: min(100%, 360px); max-width: 460px; }
-.d-searchbar { display: flex; align-items: stretch; flex-wrap: wrap; gap: 8px;
-  margin: 0 0 10px; }
-.d-searchbar .d-qwrap { min-width: min(170px, 100%); }
+.d-search-layout { display: flex; flex-wrap: wrap; align-items: center;
+  gap: 8px 12px; margin-bottom: 14px; }
+.d-searchbar { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: stretch; flex: 1 1 465px; min-width: 0; max-width: 640px;
+  border: 1px solid var(--yb-frame); border-radius: 9px; background: var(--yb-pane);
+  color-scheme: light dark; }
+:root[data-theme="dark"] .d-searchbar { color-scheme: dark; }
+:root[data-theme="light"] .d-searchbar { color-scheme: light; }
+.d-searchbar:focus-within { border-color: var(--yb-link); }
+.d-searchbar .d-qwrap { min-width: 0; max-width: none; }
 .d-searchbar > select, .d-searchbar #d-stroke-count {
-  width: auto; padding: 7px 9px; border: 1px solid var(--line);
-  border-radius: 9px; font: inherit; color: var(--ink); background: var(--card);
+  min-width: 0; margin: 0; padding: 0 7px; border: 0; border-radius: 0;
+  font: inherit; font-size: 13px; color: var(--yb-ink); background: transparent;
 }
-.d-searchbar #d-stroke-count { width: 100px; }
+.d-searchbar > select { field-sizing: content; cursor: pointer; }
+.d-searchbar > select option { color: var(--yb-ink); background: var(--yb-pane); }
+.d-searchbar > select:focus-visible, .d-searchbar #d-stroke-count:focus-visible {
+  box-shadow: inset 0 0 0 1px var(--yb-link); }
+.d-searchbar #d-mode { grid-column: 1; border-inline-end: 1px solid var(--yb-bd-soft);
+  border-radius: 8px 0 0 8px; }
+.d-searchbar .d-qwrap { grid-column: 2; }
+.d-searchbar #d-match, .d-searchbar #d-stroke-count {
+  grid-column: 3; border-inline-start: 1px solid var(--yb-bd-soft); }
+.d-searchbar #d-stroke-count { width: 86px; }
 .d-searchbar > [hidden] { display: none; }
+.d-searchbar #d-go { grid-column: 4; width: 34px; height: 34px; margin: 3px;
+  display: grid; place-items: center; padding: 0; border: 0; border-radius: 6px;
+  background: #fdbc1e; color: #111; cursor: pointer; }
+.d-searchbar #d-go:hover { background: #f8c845; }
+.d-searchbar #d-go:focus-visible { box-shadow: 0 0 0 2px var(--yb-link); }
+.d-searchbar #d-go svg { width: 18px; height: 18px; }
 .d-dictionary-tools { display: flex; align-items: center; flex-wrap: wrap;
-  gap: 8px; margin: 0 0 16px; }
+  gap: 6px; }
+#d-note:not(:empty) { margin: -4px 0 12px; }
+@media (max-width: 490px) {
+  .d-searchbar { grid-template-columns: auto minmax(0, 1fr) auto; }
+  .d-searchbar #d-mode, .d-searchbar .d-qwrap, .d-searchbar #d-go { grid-row: 1; }
+  .d-searchbar #d-go { grid-column: 3; }
+  .d-searchbar #d-match, .d-searchbar #d-stroke-count {
+    grid-column: 1 / -1; grid-row: 2; width: 100%; min-height: 32px;
+    border-inline-start: 0; border-top: 1px solid var(--yb-bd-soft); }
+}
 .d-search-pages { display: flex; align-items: center; gap: 8px;
   justify-content: flex-end; padding: 8px 12px; border-top: 1px solid var(--yb-bd-soft);
   color: var(--yb-dim); font-size: 14px; font-variant-numeric: tabular-nums; }
@@ -107,6 +138,9 @@
   background: #242c36; border-color: #3d4754; } }
 :root[data-theme="dark"] #d-q,
 :root[data-theme="dark"] .fv-q { background: #242c36; border-color: #3d4754; }
+#d-search #d-q { min-width: 0; padding: 6px 32px 6px 10px; border: 0; border-radius: 0;
+  background: transparent; color: var(--yb-ink); font-size: 15px; }
+#d-search .d-clearq { width: 32px; }
 /* Dark tables drop the zebra: every row wears the stripe colour, with a
    breath of pane showing between rows. Light keeps the YellowBridge look. */
 @media (prefers-color-scheme: dark) {

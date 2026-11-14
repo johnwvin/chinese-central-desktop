@@ -389,7 +389,7 @@ export function Frames({ shell }: { shell: Shell }) {
         if (url.origin === window.location.origin && url.pathname === "/browser") {
           return <BrowserPane key={tab.id} tabId={tab.id}
             shown={shown} style={style} initialUrl={url.searchParams.get("url") ?? undefined}
-            onLocationChange={(pageUrl, title) => shell.relabel(tab.id, `/browser?url=${encodeURIComponent(pageUrl)}`, title || "Browser")}
+            onLocationChange={(pageUrl, title) => shell.relabel(tab.id, pageUrl ? `/browser?url=${encodeURIComponent(pageUrl)}` : "/browser", title || "Browser")}
             onDefine={(text) => shell.lookupBeside("/dictionary?q=" + encodeURIComponent(text), tab.id)}
             onOpenTab={(address) => shell.open("/browser?url=" + encodeURIComponent(address), { fresh: true })}
             onClose={() => shell.close(tab.id)} />;

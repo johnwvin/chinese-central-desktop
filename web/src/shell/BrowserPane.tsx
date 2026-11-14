@@ -4,7 +4,6 @@ import { BOOKMARKS_CHANGED, BrowserBookmarks, bookmarkDetails, bookmarkPage, can
 import { AdBlockDialog, BookmarkDialog } from "./BrowserDialogs";
 import { ActionIcon } from "../ui/ActionIcon";
 
-const GOOGLE = "https://www.google.com/";
 const AD_BLOCK_KEY = "cc-browser-ad-blocking";
 const AD_WHITELIST_KEY = "cc-browser-ad-whitelist";
 
@@ -62,7 +61,8 @@ export function BrowserPane({ tabId, shown, style, onClose, initialUrl, onLocati
   const host = useRef<HTMLDivElement>(null);
   const placement = useRef("");
   const [retry, setRetry] = useState(0);
-  const [location, setLocation] = useState<LocationState>({ tabId, url: initialUrl ?? GOOGLE, back: false, forward: false });
+  const [startUrl, setStartUrl] = useState(initialUrl ?? "");
+  const [location, setLocation] = useState<LocationState>({ tabId, url: startUrl, back: false, forward: false });
   const locationCallback = useRef(onLocationChange);
   const [draft, setDraft] = useState<string | null>(null);
   const [error, setError] = useState("");
@@ -91,10 +91,12 @@ export function BrowserPane({ tabId, shown, style, onClose, initialUrl, onLocati
   useEffect(() => {
     const changed = (event: Event) => {
       const next = (event as CustomEvent<LocationState>).detail;
-      if (next.tabId !== tabId || !/^https?:\/\//.test(next.url)) return;
-      browserLocations.set(tabId, next);
-      setLocation(next);
-      locationCallback.current(next.url, next.title ?? "");
+      if (next.tabId !== tabId) return;
+      const active = next.url === "about:blank" ? { ...next, url: "", title: "" } : next;
+      if (active.url && !/^https?:\/\//.test(active.url)) return;
+      browserLocations.set(tabId, active);
+      setLocation(active);
+      locationCallback.current(active.url, active.title ?? "");
     };
     const blockChanged = () => {
       const enabled = localStorage.getItem(AD_BLOCK_KEY) !== "false";
@@ -134,6 +136,7 @@ export function BrowserPane({ tabId, shown, style, onClose, initialUrl, onLocati
   }, [tabId, shown, onDefine, onOpenTab]);
 
   useEffect(() => {
+    if (!startUrl) return;
     let alive = true;
     let frame = 0;
     const position = () => {
@@ -144,7 +147,7 @@ export function BrowserPane({ tabId, shown, style, onClose, initialUrl, onLocati
       const key = JSON.stringify(bounds);
       if (key === placement.current) return;
       placement.current = key;
-      void browserCommand(tabId, "place", { bounds, url: initialUrl, blockAds: localStorage.getItem(AD_BLOCK_KEY) !== "false", adWhitelist: readAdWhitelist() })
+      void browserCommand(tabId, "place", { bounds, url: startUrl, blockAds: localStorage.getItem(AD_BLOCK_KEY) !== "false", adWhitelist: readAdWhitelist() })
         .catch((cause) => { if (alive) setError(String(cause)); });
     };
     const schedule = () => {
@@ -167,11 +170,15 @@ export function BrowserPane({ tabId, shown, style, onClose, initialUrl, onLocati
       overlays.disconnect();
       window.removeEventListener("resize", schedule);
     };
-  }, [tabId, shown, retry, style.left, initialUrl]);
+  }, [tabId, shown, retry, style.left, startUrl]);
 
   const run = (action: string, options: Record<string, unknown> = {}) => {
     setError("");
-    if (action === "back" || action === "forward" || action === "home") setDraft(null);
+    if (action === "back" || action === "forward") setDraft(null);
+    if (action === "navigate" && !startUrl && typeof options.url === "string") {
+      setStartUrl(options.url);
+      return;
+    }
     void browserCommand(tabId, action, options).catch((cause) => setError(String(cause)));
   };
 
@@ -189,9 +196,9 @@ export function BrowserPane({ tabId, shown, style, onClose, initialUrl, onLocati
     }}>
       <button type="button" title="Back" aria-label="Back" disabled={!location.back} onClick={() => run("back")}><ActionIcon name="back" /></button>
       <button type="button" title="Forward" aria-label="Forward" disabled={!location.forward} onClick={() => run("forward")}><ActionIcon name="forward" /></button>
-      <button type="button" title="Reload" aria-label="Reload" onClick={() => run("reload")}><ActionIcon name="reload" /></button>
-      <button type="button" title="Google home" aria-label="Home" onClick={() => run("home")}><ActionIcon name="home" /></button>
+      <button type="button" title="Reload" aria-label="Reload" disabled={!location.url} onClick={() => run("reload")}><ActionIcon name="reload" /></button>
       <input type="text" aria-label="Address or search Google"
+        placeholder="Search Google or enter an address"
         spellCheck={false} autoComplete="off" value={draft ?? location.url}
         onFocus={(event) => event.currentTarget.select()} onChange={(event) => setDraft(event.target.value)}
         onKeyDown={(event) => { if (event.key === "Escape") setDraft(null); }} />

@@ -9,6 +9,7 @@ import {
 } from "./pdfjs";
 import { JumpHistory, type ReadingSpot } from "./jumpHistory";
 import { ReaderFind, matchRange, showFindRange, waitForFind } from "./ReaderFind";
+import { ReaderBookmark } from "./ReaderBookmark";
 
 type Chapter = { title: string; page: number; depth: number };
 type Bookmark = { id: number; at: number; off: number; name: string };
@@ -138,6 +139,23 @@ export function PdfReader({ f }: { f: string }) {
     );
   }
 
+  const zoomControls = (
+    <div className="pf-zoom-actions" role="group" aria-label="PDF zoom">
+      <button type="button" className="pf-icon-button" aria-label="Zoom out" title="Zoom out"
+        onClick={() => control.current?.zoomBy(1 / 1.2)}>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 12h10" /></svg>
+      </button>
+      <button type="button" className="pf-icon-button" aria-label="Fit page" title="Fit page"
+        onClick={() => control.current?.fit()}>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5" /></svg>
+      </button>
+      <button type="button" className="pf-icon-button" aria-label="Zoom in" title="Zoom in"
+        onClick={() => control.current?.zoomBy(1.2)}>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7v10M7 12h10" /></svg>
+      </button>
+    </div>
+  );
+
   return (
     <>
       <div id="rd-pdfjs" hidden={!ready} ref={outer}>
@@ -151,9 +169,10 @@ export function PdfReader({ f }: { f: string }) {
         <div className="pf-reader-layout">
           <div className="pf-side-layer">
           {!sideOpen && (
+            <div className="pf-closed-tools">
             <button
               type="button"
-              className="pf-icon-button pf-menu-button pf-open-side"
+              className="pf-icon-button"
               aria-expanded={false}
               aria-controls="pf-sidebar"
               aria-label="Show PDF controls and navigation"
@@ -162,6 +181,8 @@ export function PdfReader({ f }: { f: string }) {
             >
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h14" /></svg>
             </button>
+            {zoomControls}
+            </div>
           )}
           <aside id="pf-sidebar" aria-label="PDF navigation" hidden={!sideOpen}>
             <div className="pf-side-controls">
@@ -228,16 +249,7 @@ export function PdfReader({ f }: { f: string }) {
                 >
                   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
                 </button>
-                <span className="pf-tool-separator" aria-hidden="true" />
-                <button type="button" className="pf-icon-button" id="pf-out" aria-label="Zoom out" title="Zoom out" onClick={() => control.current?.zoomBy(1 / 1.2)}>
-                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 12h10" /></svg>
-                </button>
-                <button type="button" className="pf-icon-button" id="pf-fit" aria-label="Fit page" title="Fit page" onClick={() => control.current?.fit()}>
-                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5" /></svg>
-                </button>
-                <button type="button" className="pf-icon-button" id="pf-in" aria-label="Zoom in" title="Zoom in" onClick={() => control.current?.zoomBy(1.2)}>
-                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7v10M7 12h10" /></svg>
-                </button>
+                {sideOpen && zoomControls}
               </div>
             </div>
             <div className="pf-side-tabs" role="tablist" aria-label="PDF navigation views">
@@ -304,14 +316,10 @@ export function PdfReader({ f }: { f: string }) {
               {bookmarks.length ? (
                 <div className="rd-bookmark-list">
                   {bookmarks.map((mark) => (
-                    <div className="rd-bookmark" key={mark.id}>
-                      <button type="button" className="rd-bookmark-jump" title={mark.name || `Page ${mark.at}`}
-                        onClick={() => control.current?.gotoSpot(mark.at, mark.off)}>
-                        <b>{mark.name || `Page ${mark.at}`}</b>
-                        {mark.name ? <span>Page {mark.at}</span> : null}
-                      </button>
-                      <button type="button" className="rd-bookmark-delete" aria-label={`Delete ${mark.name || `Page ${mark.at}`}`} title="Delete bookmark" onClick={() => saveBookmarks(bookmarks.filter((item) => item.id !== mark.id))}>&times;</button>
-                    </div>
+                    <ReaderBookmark key={mark.id} name={mark.name} position={`Page ${mark.at}`}
+                      onJump={() => control.current?.gotoSpot(mark.at, mark.off)}
+                      onDelete={() => saveBookmarks(bookmarks.filter((item) => item.id !== mark.id))}
+                      onRename={(name) => saveBookmarks(bookmarks.map((item) => item.id === mark.id ? { ...item, name } : item))} />
                   ))}
                 </div>
               ) : <div className="rd-bookmark-empty">
@@ -467,7 +475,7 @@ class Controller {
       this.scale = this.fitScale(v1.width);
       this.fitting = true;
     }
-    this.build(v1.width / v1.height);
+    this.build(v1);
     this.buildThumbs();
     this.watch();
 
@@ -510,15 +518,15 @@ class Controller {
    * the scrollbar is honest before anything is drawn. Each sheet is corrected
    * to its own size the moment it is.
    */
-  private build(ratio: number) {
+  private build(viewport: { width: number; height: number }) {
     this.box.innerHTML = "";
     this.sheets = [];
     for (let i = 1; i <= this.doc.numPages; i++) {
       const sheet = document.createElement("div");
       sheet.className = "pf-page";
       sheet.dataset.n = String(i);
-      sheet.style.width = Math.round(612 * this.scale) + "px";
-      sheet.style.height = Math.round((612 * this.scale) / ratio) + "px";
+      sheet.style.width = Math.round(viewport.width * this.scale) + "px";
+      sheet.style.height = Math.round(viewport.height * this.scale) + "px";
       const wait = document.createElement("div");
       wait.className = "pf-wait";
       wait.textContent = String(i);
@@ -788,7 +796,7 @@ class Controller {
     if (!this.live) return;
     const v1 = first.getViewport({ scale: 1 });
     if (isFit) this.scale = this.fitScale(v1.width);
-    this.build(v1.width / v1.height);
+    this.build(v1);
     // Back to where you were rather than to the top of the page you were on:
     // a paragraph two thirds down a sheet is a place, and a rebuild that
     // forgets it is a rebuild you feel.
@@ -879,9 +887,20 @@ class Controller {
   // Arrow keys turn the page, unless something is being typed into or a
   // selection is being dragged out.
   private onKey = (ev: KeyboardEvent) => {
-    if (ev.ctrlKey || ev.metaKey || ev.altKey) return;
     const tag = (ev.target as HTMLElement | null)?.tagName;
-    if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+    if (ev.altKey || tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+    const modified = ev.ctrlKey || ev.metaKey;
+    if (ev.key === "+" || (modified && ev.key === "=") || ev.key === "-") {
+      ev.preventDefault();
+      this.zoomBy(ev.key === "-" ? 1 / 1.2 : 1.2);
+      return;
+    }
+    if (modified && ev.key === "0") {
+      ev.preventDefault();
+      this.fit();
+      return;
+    }
+    if (modified) return;
     if (ev.key === "ArrowRight" || ev.key === "PageDown") {
       ev.preventDefault();
       this.goto(this.aim + 1);

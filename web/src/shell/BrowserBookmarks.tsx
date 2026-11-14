@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type DragEvent, type KeyboardEvent, type MouseEvent } from "react";
 import { ActionIcon } from "../ui/ActionIcon";
+import { BookmarkRename } from "../ui/BookmarkRename";
 import { confirmDialog } from "../ui/ask";
 
 const KEY = "cc-browser-bookmarks.v1";
@@ -115,6 +116,7 @@ export function BrowserBookmarks({ onOpen, onClose }: {
   const [newFolder, setNewFolder] = useState(false);
   const [folderName, setFolderName] = useState("");
   const [menu, setMenu] = useState<ContextMenu | null>(null);
+  const [renaming, setRenaming] = useState<Bookmark | null>(null);
   const [dropHint, setDropHint] = useState<DropHint | null>(null);
   const dragged = useRef<Target | null>(null);
   const panel = useRef<HTMLElement>(null);
@@ -156,7 +158,8 @@ export function BrowserBookmarks({ onOpen, onClose }: {
   const showMenu = (target: Target, x: number, y: number) => {
     const bounds = panel.current?.getBoundingClientRect();
     if (!bounds) return;
-    setMenu({ target, x: Math.max(bounds.left + 6, Math.min(x, bounds.right - 124)), y: Math.min(y, window.innerHeight - 50) });
+    const width = target.kind === "bookmark" ? 152 : 124;
+    setMenu({ target, x: Math.max(bounds.left + 6, Math.min(x, bounds.right - width)), y: Math.min(y, window.innerHeight - 50) });
   };
 
   const dropPosition = (event: DragEvent<HTMLElement>, target: Target | null, nested: boolean): Placement | null => {
@@ -288,7 +291,16 @@ export function BrowserBookmarks({ onOpen, onClose }: {
     {menu && <div ref={menuBox} className="browser-bookmark-context" role="menu" aria-label="Bookmark actions" style={{ left: menu.x, top: menu.y }}>
       <button type="button" role="menuitem" title="Move up" aria-label="Move up" onClick={() => move(menu.target, -1)}><ActionIcon name="up" /></button>
       <button type="button" role="menuitem" title="Move down" aria-label="Move down" onClick={() => move(menu.target, 1)}><ActionIcon name="down" /></button>
+      {menu.target.kind === "bookmark" && <button type="button" role="menuitem" title="Rename" aria-label="Rename" onClick={() => {
+        setRenaming(data.items.find((item) => item.url === menu.target.id) ?? null);
+        setMenu(null);
+      }}><ActionIcon name="edit" /></button>}
       <button type="button" role="menuitem" title="Delete" aria-label="Delete" onClick={() => remove(menu.target)}><ActionIcon name="trash" /></button>
     </div>}
+    {renaming && <BookmarkRename name={renaming.title || renaming.url} onClose={() => setRenaming(null)} onSave={(title) => {
+      if (save((current) => ({
+        ...current, items: current.items.map((item) => item.url === renaming.url ? { ...item, title } : item),
+      }))) setRenaming(null);
+    }} />}
   </aside>;
 }

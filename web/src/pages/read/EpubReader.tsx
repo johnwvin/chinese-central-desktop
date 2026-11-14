@@ -4,6 +4,7 @@ import { remember, remembered } from "./pdfjs";
 import { JumpHistory, type ReadingSpot } from "./jumpHistory";
 import { paginateEpub } from "./epubPages";
 import { ReaderFind, matchRange, searchableText, showFindRange, waitForFind } from "./ReaderFind";
+import { ReaderBookmark } from "./ReaderBookmark";
 
 type Bookmark = { id: number; at: number; off: number; name: string };
 
@@ -737,14 +738,10 @@ export function EpubReader({ f }: { f: string }) {
             {bookmarks.length ? (
               <div className="rd-bookmark-list">
                 {bookmarks.map((mark) => (
-                  <div className="rd-bookmark" key={mark.id}>
-                    <button type="button" className="rd-bookmark-jump" title={mark.name || `Chapter ${mark.at + 1}`}
-                      onClick={() => goBookmark(mark)}>
-                      <b>{mark.name || `Chapter ${mark.at + 1}`}</b>
-                      {mark.name ? <span>Chapter {mark.at + 1}</span> : null}
-                    </button>
-                    <button type="button" className="rd-bookmark-delete" aria-label={`Delete ${mark.name || `Chapter ${mark.at + 1}`}`} title="Delete bookmark" onClick={() => saveBookmarks(bookmarks.filter((item) => item.id !== mark.id))}>&times;</button>
-                  </div>
+                  <ReaderBookmark key={mark.id} name={mark.name} position={`Chapter ${mark.at + 1}`}
+                    onJump={() => goBookmark(mark)}
+                    onDelete={() => saveBookmarks(bookmarks.filter((item) => item.id !== mark.id))}
+                    onRename={(name) => saveBookmarks(bookmarks.map((item) => item.id === mark.id ? { ...item, name } : item))} />
                 ))}
               </div>
             ) : <div className="rd-bookmark-empty">

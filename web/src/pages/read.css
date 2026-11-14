@@ -19,8 +19,9 @@
   border: 1px solid color-mix(in srgb, var(--line) 82%, transparent);
   border-radius: 14px; box-shadow: 0 18px 44px rgba(0,0,0,.22); }
 #pf-sidebar[hidden], #rd-epub-nav[hidden] { display: none; }
-.pf-side-layer .pf-open-side { position: absolute; top: 0; left: 0;
-  background: var(--card); border-color: var(--line); }
+.pf-closed-tools { position: absolute; top: 0; left: 0; display: flex;
+  max-width: 100%; padding: 2px; background: var(--card); border: 1px solid var(--line);
+  border-radius: 10px; box-shadow: 0 4px 14px #0003; }
 .pf-side-controls { display: grid; gap: 10px; padding: 12px;
   border-bottom: 1px solid var(--line); }
 .pf-side-head, .pf-side-row { display: flex; align-items: center; gap: 5px; }
@@ -42,8 +43,13 @@
 .pf-icon-button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .pf-icon-button:disabled { opacity: .28;  }
 .pf-menu-button { margin-left: -4px; }
-.pf-side-row { justify-content: center; padding: 2px;
+.pf-side-row { padding: 2px; gap: 0;
   border-radius: 11px; background: color-mix(in srgb, var(--bg) 72%, var(--card)); }
+.pf-zoom-actions { display: flex; min-width: 0; border-inline-start: 1px solid var(--line); }
+.pf-side-row > .pf-icon-button, .pf-zoom-actions .pf-icon-button {
+  flex: 1 1 0; width: auto; min-width: 0; padding: 0; }
+.pf-side-row .pf-zoom-actions { flex: 3 1 0; }
+.pf-closed-tools .pf-zoom-actions .pf-icon-button { width: 36px; }
 .rd-history { display: flex; align-items: center; gap: 2px; }
 .rd-history button { display: grid; place-items: center; width: 31px; height: 31px;
   padding: 5px; border: 0; border-radius: 7px; background: transparent;
@@ -56,8 +62,6 @@
 .rd-history button:disabled { opacity: .28;  }
 .pf-side-head .rd-history { margin-left: 2px; }
 #rd-epub-nav > .rd-history { justify-content: flex-end; padding: 6px 8px 2px; }
-.pf-tool-separator { width: 1px; height: 22px; margin: 0 5px;
-  background: var(--line); }
 .pfzoom { display: inline-flex; gap: 4px; margin-left: auto; }
 .pf-side-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px;
   margin: 8px; padding: 3px; border: 0; border-radius: 10px;
@@ -148,7 +152,8 @@
 .rd-bookmark-jump { min-width: 0; padding: 12px 10px; text-align: left; }
 .rd-bookmark-jump b, .rd-bookmark-jump span { display: block; overflow: hidden;
   white-space: nowrap; text-overflow: ellipsis; }
-.rd-bookmark-jump b { font-size: 12.5px; }
+.rd-bookmark-jump b { font-size: 12.5px; line-height: 1.4; white-space: normal;
+  overflow-wrap: anywhere; }
 .rd-bookmark-jump span { display: table; margin-top: 6px; padding: 3px 7px;
   border: 1px solid color-mix(in srgb, var(--line) 84%, transparent);
   border-radius: 999px; background: color-mix(in srgb, var(--bg) 75%, transparent);
@@ -158,6 +163,11 @@
   transition: color .14s ease, background .14s ease; }
 .rd-bookmark-delete:hover { background: color-mix(in srgb, var(--ink) 8%, transparent); }
 .rd-bookmark-jump:hover, .rd-bookmark-delete:hover { color: var(--accent); }
+.rd-bookmark-menu { position: fixed; z-index: 50; padding: 4px; border: 1px solid var(--line);
+  border-radius: 8px; background: var(--card); box-shadow: 0 6px 20px #0004; }
+.rd-bookmark-menu button { display: block; width: 110px; padding: 6px 8px; border: 0; border-radius: 4px;
+  text-align: start; font: inherit; font-size: 14px; color: var(--ink); background: transparent; cursor: pointer; }
+.rd-bookmark-menu button:hover, .rd-bookmark-menu button:focus-visible { background: var(--bg); color: var(--accent); }
 .rd-bookmark-empty { display: flex; flex-direction: column; align-items: center;
   margin: 34px 10px 0; color: var(--muted); text-align: center; }
 .rd-bookmark-empty svg { width: 28px; height: 28px; margin-bottom: 10px;

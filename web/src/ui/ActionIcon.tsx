@@ -1,4 +1,4 @@
-type IconName = "back" | "forward" | "reload" | "home" | "bookmark" | "star" | "folder" | "folderAdd" | "shield" | "close" | "check" | "trash" | "up" | "down" | "grip" | "cards" | "first" | "last" | "eye" | "due";
+type IconName = "back" | "forward" | "reload" | "home" | "bookmark" | "star" | "folder" | "folderAdd" | "shield" | "close" | "check" | "trash" | "edit" | "up" | "down" | "grip" | "cards" | "first" | "last" | "eye" | "due";
 
 const paths: Record<IconName, string> = {
   back: "m14 5-7 7 7 7M7 12h14",
@@ -13,6 +13,7 @@ const paths: Record<IconName, string> = {
   close: "m6 6 12 12M6 18 18 6",
   check: "m5 12 4 4L19 6",
   trash: "M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7",
+  edit: "M4 20l4-.8L20 7l-3-3L5 16l-1 4Zm10-13 3 3",
   up: "m5 14 7-7 7 7",
   down: "m5 10 7 7 7-7",
   cards: "M8 3h12v15H8V3ZM4 7v14h12",

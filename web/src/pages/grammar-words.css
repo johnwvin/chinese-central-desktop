@@ -2,7 +2,9 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: space-between;
   gap: 8px;
+  max-width: 1000px;
   margin-bottom: 16px;
 }
 .grammar-words-search .d-qwrap {
@@ -72,8 +74,12 @@
   font-weight: 600;
   cursor: pointer;
 }
-.grammar-test-button:hover {
+.grammar-test-button:hover:not(:disabled) {
   border-color: var(--yb-link);
+}
+.grammar-test-button:disabled {
+  opacity: .5;
+  cursor: default;
 }
 .grammar-test-button:focus-visible {
   box-shadow: 0 0 0 2px var(--yb-link);

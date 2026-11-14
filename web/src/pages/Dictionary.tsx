@@ -54,7 +54,8 @@ export function Dictionary() {
         </button>
       )}
       <h1>Dictionary</h1>
-      <form id="d-search" className="searchbar d-searchbar" role="search" aria-label="Dictionary search">
+      <div className="d-search-layout">
+      <form id="d-search" className="d-searchbar" role="search" aria-label="Dictionary search">
         <select id="d-mode" aria-label="Search by" title="Search by">
           {Object.entries(searchModes).map(([mode, settings]) => (
             <option key={mode} value={mode}>{settings.label}</option>
@@ -107,19 +108,9 @@ export function Dictionary() {
           aria-label="Total stroke count" title="Total stroke count" hidden />
         <button
           type="submit"
-          className="btn"
           id="d-go"
           title="Search"
           aria-label="Search"
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "10px 15px",
-            background: "#fdbc1e",
-            border: "1px solid #d9a512",
-            color: "#000",
-          }}
         >
           <svg
             viewBox="0 0 24 24"
@@ -127,7 +118,6 @@ export function Dictionary() {
             stroke="currentColor"
             strokeWidth="2"
             strokeLinecap="round"
-            style={{ width: "19px", height: "19px" }}
           >
             <circle cx="11" cy="11" r="7"></circle>
             <path d="m21 21-4.3-4.3"></path>
@@ -161,8 +151,9 @@ export function Dictionary() {
         <a className="d-ranks" href="/dictionary/grammar-words" target="_blank" rel="noreferrer">
           Grammar Terms
         </a>
-        <span className="quiet" id="d-note"></span>
       </div>
+      </div>
+      <div className="quiet" id="d-note" role="status"></div>
       {/* The way back. Following a character out of an entry replaces what is
           in this pane, so without this the entry you started from is gone and
           only the browser's Back button knows where it went. Filled by
