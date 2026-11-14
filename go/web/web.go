@@ -38,7 +38,8 @@ var owned = map[string]bool{
 	// whatever the dictionary happens to be showing.
 	"/dictionary/ranks": true,
 	// The favourites, a page of their own for the same reason.
-	"/dictionary/favorites": true,
+	"/dictionary/favorites":     true,
+	"/dictionary/grammar-words": true,
 }
 
 // Built says whether there is a real app in here, or only the placeholder.
