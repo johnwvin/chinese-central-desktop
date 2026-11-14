@@ -7,6 +7,7 @@ import { Read } from "./pages/Read";
 import { Notes } from "./pages/Notes";
 import { Games } from "./pages/Games";
 import { Dictionary } from "./pages/Dictionary";
+import { GrammarWords } from "./pages/GrammarWords";
 import { Ranks } from "./pages/Ranks";
 import { Favorites } from "./pages/Favorites";
 import { Control } from "./pages/Control";
@@ -46,6 +47,8 @@ function Page() {
       return <Suspense fallback={null}><HskPrep /></Suspense>;
     case "/dictionary":
       return <Dictionary />;
+    case "/dictionary/grammar-words":
+      return <GrammarWords />;
     case "/dictionary/ranks":
       return <Ranks />;
     case "/dictionary/favorites":

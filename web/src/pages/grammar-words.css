@@ -1,0 +1,25 @@
+.grammar-words-search {
+  margin-bottom: 16px;
+}
+.grammar-words {
+  max-width: 1000px;
+  overflow-x: auto;
+}
+.grammar-words th {
+  padding: 8px 12px;
+  text-align: left;
+}
+.grammar-words td:first-child, .grammar-words td:last-child {
+  white-space: nowrap;
+}
+.grammar-words a {
+  color: var(--yb-ink);
+  text-decoration: none;
+}
+.grammar-words a:hover {
+  color: var(--yb-link);
+  text-decoration: underline;
+}
+.grammar-word-pinyin {
+  color: var(--yb-dim);
+}

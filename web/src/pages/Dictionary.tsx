@@ -148,6 +148,9 @@ export function Dictionary() {
         <a className="d-ranks" href="/dictionary/favorites" target="_blank" rel="noreferrer">
           收藏 Favorites
         </a>
+        <a className="d-ranks" href="/dictionary/grammar-words" target="_blank" rel="noreferrer">
+          Grammar Words
+        </a>
         <span className="quiet" id="d-note"></span>
       </div>
       {/* The way back. Following a character out of an entry replaces what is

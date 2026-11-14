@@ -91,6 +91,7 @@ const NAMES: Record<string, string> = {
   "/source": "Sources",
   "/dictionary/ranks": "Frequency Ranks",
   "/dictionary/favorites": "Favorites",
+  "/dictionary/grammar-words": "Grammar Words",
 };
 
 // The same marks the game cards wear, so a game's tab looks like the card it
