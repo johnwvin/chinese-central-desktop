@@ -45,19 +45,28 @@ function FlashcardTest({ cards, onBack }: { cards: Card[]; onBack: () => void })
   }
 
   return (
-    <section className="grammar-test" aria-label="Flashcard test">
-      <div className="grammar-test-toolbar">
-        <button className="btn" type="button" onClick={onBack} title="Back to list" aria-label="Back to list">←</button>
-        {card && <span aria-label={`Card ${index + 1} of ${deck.length}`}>{index + 1} / {deck.length}</span>}
-      </div>
+    <section className="grammar-test" aria-labelledby="grammar-test-title">
+      <header className="grammar-test-toolbar">
+        <button className="grammar-test-button grammar-test-back" type="button" onClick={onBack}
+          title="Back to list" aria-label="Back to list">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M19 12H5m7 7-7-7 7-7" />
+          </svg>
+        </button>
+        <h1 id="grammar-test-title">Grammar Terms</h1>
+        {card && <span className="grammar-test-count" aria-label={`Card ${index + 1} of ${deck.length}`}>
+          {index + 1} / {deck.length}
+        </span>}
+      </header>
       <div className="grammar-test-card" aria-live="polite">
         {card ? (
           <>
             <div className="grammar-test-term" lang="zh-Hans">{card.term}</div>
             {revealed && (
               <>
-                <div className="grammar-word-pinyin">{card.pinyin}</div>
-                <div>{card.meaning}</div>
+                <div className="grammar-test-pinyin">{card.pinyin}</div>
+                <div className="grammar-test-meaning">{card.meaning}</div>
               </>
             )}
           </>
@@ -70,14 +79,14 @@ function FlashcardTest({ cards, onBack }: { cards: Card[]; onBack: () => void })
       </div>
       <div className="grammar-test-actions">
         {!card ? (
-          <button className="btn accent" type="button" onClick={restart}>Test again</button>
+          <button className="grammar-test-button grammar-test-primary" type="button" onClick={restart}>Test again</button>
         ) : revealed ? (
           <>
-            <button className="btn" type="button" onClick={() => grade(false)}>Missed it</button>
-            <button className="btn accent" type="button" onClick={() => grade(true)}>Got it</button>
+            <button className="grammar-test-button" type="button" onClick={() => grade(false)}>Missed it</button>
+            <button className="grammar-test-button grammar-test-primary" type="button" onClick={() => grade(true)}>Got it</button>
           </>
         ) : (
-          <button className="btn accent" type="button" onClick={() => setRevealed(true)}>Reveal</button>
+          <button className="grammar-test-button grammar-test-primary" type="button" onClick={() => setRevealed(true)}>Reveal</button>
         )}
       </div>
     </section>
@@ -95,11 +104,11 @@ export function GrammarWords() {
 
   return (
     <HubPage name="dictionary">
-      <h1>Grammar Terms</h1>
       {testCards ? (
         <FlashcardTest cards={testCards} onBack={() => setTestCards(null)} />
       ) : (
         <>
+          <h1>Grammar Terms</h1>
           <div className="searchbar grammar-words-search">
             <span className="d-qwrap">
               <input type="search" className="fv-q" placeholder="Search" aria-label="Search grammar terms"

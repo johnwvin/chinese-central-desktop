@@ -36,34 +36,97 @@
   color: var(--yb-dim);
 }
 .grammar-test {
-  max-width: 560px;
-}
-.grammar-test-toolbar, .grammar-test-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  max-width: 640px;
+  margin: clamp(20px, 7vh, 68px) auto 32px;
 }
 .grammar-test-toolbar {
-  justify-content: space-between;
-  margin-bottom: 8px;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.grammar-test-toolbar h1 {
+  margin: 0;
+  text-align: center;
+  font-size: clamp(18px, 3.8vw, 25px);
+  line-height: 1.2;
+}
+.wrap .grammar-test-toolbar h1::after {
+  display: none;
+}
+.grammar-test-count {
+  justify-self: end;
+  white-space: nowrap;
   color: var(--yb-dim);
   font-variant-numeric: tabular-nums;
+}
+.grammar-test-button {
+  min-height: 42px;
+  padding: 8px 16px;
+  border: 1px solid var(--yb-bd);
+  border-radius: 9px;
+  background: var(--yb-btn);
+  color: var(--yb-ink);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.grammar-test-button:hover {
+  border-color: var(--yb-link);
+}
+.grammar-test-button:focus-visible {
+  box-shadow: 0 0 0 2px var(--yb-link);
+}
+.grammar-test-back {
+  justify-self: start;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  padding: 0;
+}
+.grammar-test-back svg {
+  width: 19px;
+  height: 19px;
+}
+.grammar-test-primary {
+  border-color: #fdbc1e;
+  background: #fdbc1e;
+  color: #111;
 }
 .grammar-test-card {
   display: grid;
   align-content: center;
-  gap: 4px;
-  min-height: 180px;
-  padding: 16px;
+  gap: 8px;
+  box-sizing: border-box;
+  min-height: clamp(190px, 30vh, 300px);
+  padding: 24px 18px;
   text-align: center;
   background: var(--yb-pane);
+  color: var(--yb-ink);
   border: 1px solid var(--yb-bd);
-  border-radius: 12px;
+  border-radius: 14px;
+  box-shadow: var(--yb-shadow);
 }
 .grammar-test-term {
   font-size: clamp(24px, 6vw, 44px);
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+.grammar-test-pinyin {
+  color: var(--yb-dim);
+  font-size: 19px;
+}
+.grammar-test-meaning {
+  font-size: 19px;
 }
 .grammar-test-actions {
+  display: flex;
+  align-items: center;
   justify-content: center;
-  margin-top: 8px;
+  gap: 10px;
+  margin-top: 14px;
+}
+.grammar-test-actions button {
+  min-width: 104px;
 }
