@@ -24,18 +24,8 @@ export interface Tab {
    */
   src: string;
   label: string;
-  /**
-   * Bumped when this tab is deliberately sent somewhere, as against following
-   * a page that navigated itself.
-   *
-   * `src` alone cannot say "go here now". Sending an open dictionary to a word
-   * it is already pointed at writes the same string it already held, React
-   * sees no change and never touches the frame -- so a pane that had been
-   * clicked away somewhere else stayed there. That is not a rare case: look a
-   * word up, follow a link inside the entry, ask for the same word again.
-   * The counter always changes, so the frame is always told.
-   */
-  nav?: number;
+  /** A request to navigate the existing frame, including repeated lookups. */
+  nav?: { url: string };
   /** The group this tab belongs to, if any. */
   group?: number;
 }

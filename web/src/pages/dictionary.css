@@ -428,9 +428,14 @@
 .dcrumb:hover { background: var(--yb-zebra); text-decoration: underline; }
 /* Where you are is named, not offered: a link back to the page you are on is
    a button that does nothing. */
-.dcrumb.here { color: var(--yb-dim); flex: none; max-width: calc(100% - 48px);
+.dcrumb-current { max-width: calc(100% - 76px); min-width: 0; }
+.dcrumb-step:not([hidden]):not(:has(~ .dcrumb-step:not([hidden]))) .dcrumb-sep { display: none; }
+.dcrumb.here { color: var(--yb-dim); min-width: 0;
   overflow: hidden; text-overflow: ellipsis; }
 .dcrumb.here:hover { background: none; text-decoration: none; }
+.dcrumb-clear { margin-left: auto; flex: none; border: 1px solid var(--yb-bd);
+  background: var(--yb-btn); color: var(--yb-dim); cursor: pointer; }
+.dcrumb-clear:hover { color: var(--yb-ink); text-decoration: none; }
 .dcrumb-sep { color: var(--yb-faint); font-size: 14px; user-select: none; }
 .dcrumb-overflow { position: relative; flex: none; }
 .dcrumb-overflow summary { cursor: pointer; }

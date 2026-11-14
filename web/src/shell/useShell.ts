@@ -334,8 +334,7 @@ function change(state: State, action: Action): State {
      * dictionary sitting in the strip but not in the split is not "the one
      * beside this page", and taking it over would change a tab you cannot see.
      *
-     * `src` is what the frame is pointed at, so setting it is the navigation;
-     * `url` and the label follow so the strip says where the pane went. The
+     * `nav` asks the existing frame to navigate. The
      * decision is made here rather than in the frame that asked, because only
      * the reducer is looking at the state as it is now -- a closure handed to
      * a page when it loaded is reading the panes as they were then.
@@ -343,7 +342,7 @@ function change(state: State, action: Action): State {
     case "lookupBeside": {
       const anchor = action.from ?? state.activeId;
       const here = anchor == null ? -1 : state.panes.indexOf(anchor);
-      let reuse: Tab | undefined;
+      let reuse = state.tabs.find((tab) => tab.id === anchor && pathOf(tab.url) === "/dictionary");
       if (here >= 0) {
         for (let i = here + 1; i < state.panes.length && !reuse; i++) {
           const pane = state.tabs.find((t) => t.id === state.panes[i]);
@@ -361,9 +360,8 @@ function change(state: State, action: Action): State {
             ? {
                 ...t,
                 url: action.url,
-                src: action.url,
                 label: labelFor(action.url, null),
-                nav: (t.nav ?? 0) + 1,
+                nav: { url: action.url },
               }
             : t,
         ),

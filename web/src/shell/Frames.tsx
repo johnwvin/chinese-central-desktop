@@ -19,7 +19,7 @@ export const frames = new Map<number, HTMLIFrameElement>();
  * The last `nav` each tab was actually sent to, so one bump moves a frame once
  * however many times React renders after it.
  */
-const sent = new Map<number, number>();
+const sent = new WeakSet<NonNullable<Tab["nav"]>>();
 
 export function Frames({ shell }: { shell: Shell }) {
   const stackRef = useRef<HTMLDivElement>(null);
@@ -314,25 +314,24 @@ export function Frames({ shell }: { shell: Shell }) {
    * Everything else navigates itself and the strip follows, which is the whole
    * reason `src` is written once and left alone.
    *
-   * It cannot be done by writing `src`: sending an open dictionary to the word
-   * it is already pointed at writes the same string, React sees no change, and
-   * a pane that had been clicked away somewhere else stays there. So the tab
-   * carries a counter that changes every time, and the navigation is done
-   * here, by hand. `replace` rather than an assignment, so walking the
-   * dictionary from word to word does not build a back-history of them.
+   * Reuse the live dictionary so its trail survives the lookup.
    */
   useEffect(() => {
     for (const tab of shell.tabs) {
-      if (tab.nav == null) continue;
-      if (sent.get(tab.id) === tab.nav) continue;
-      sent.set(tab.id, tab.nav);
-      const frame = frames.get(tab.id);
-      if (!frame) continue;
+      if (!tab.nav || sent.has(tab.nav)) continue;
+      const win = frames.get(tab.id)?.contentWindow;
+      if (!win) continue;
+      sent.add(tab.nav);
+      const url = parse(tab.nav.url);
       try {
-        frame.contentWindow?.location.replace(tab.src);
+        if (url.origin === window.location.origin && url.pathname === "/dictionary" && win.__ccDictionaryLookup) {
+          win.__ccDictionaryLookup(url);
+          continue;
+        }
       } catch {
-        // Another origin, or not loaded yet: `src` still carries the address.
+        // The current document may be cross-origin.
       }
+      win.location.replace(tab.nav.url);
     }
   }, [shell.tabs]);
 

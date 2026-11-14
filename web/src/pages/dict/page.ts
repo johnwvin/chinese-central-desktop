@@ -34,6 +34,12 @@ const W = window as any;
 /* The old page ran once, because a page was loaded once. A React effect is
    not: StrictMode runs it twice in development, and twice would give every
    click two listeners and every stroke box a twin. */
+declare global {
+  interface Window {
+    __ccDictionaryLookup?: (url: URL) => void;
+  }
+}
+
 let started = false;
 
 /** Wire up the dictionary. Runs once. */
@@ -171,36 +177,19 @@ function run(): void {
     return b;
   }
 
-  /**
-   * WHERE THIS LOOKUP CAME FROM, so following one is not a one-way door.
-   *
-   * The entries you passed through on the way here, oldest first, without the
-   * one on screen. Following an entry or submitting a search adds a step.
-   * Clicking a crumb cuts the trail back to it.
-   *
-   * IT LIVES IN history.state, not just in this variable. putUrl already
-   * pushes an entry per lookup, so Back was always the other way home -- and a
-   * trail kept only in memory would have disagreed with it the moment you used
-   * it, showing crumbs for a page you had already left. Handed to pushState it
-   * comes back with the entry it belongs to, so the crumbs and the Back button
-   * are the same history rather than two.
-   */
-  /**
-   * One step of it: the lookup, and the state the page was in when you left.
-   *
-   * A crumb used to carry the word and nothing else, so following it back
-   * opened that word the way a fresh search opens it -- Word tab, no entry
-   * chosen, scrolled to the top. You had been three tabs and a chosen reading
-   * into that page when you clicked away from it, and coming back to a
-   * different page than the one you left is not going back.
-   */
+  // Word pages visited in this dictionary tab, with their last reading and position.
   interface Step {
     q: string;
     tab: string;
     ent: number | null;
     y: number;
   }
-  let TRAIL: Step[] = [];
+  let trail: Step[] = [];
+
+  function onWordPage(): boolean {
+    return !!(DATA?.q && !DATA.error && !DATA.segments && DATA.chars?.length &&
+      (DATA.entries.length <= 1 || ENT != null));
+  }
 
   /** The dictionary is a page in a frame, so the document is what scrolls. */
   function scroller(): Element {
@@ -213,25 +202,11 @@ function run(): void {
   function stepHere(): Step {
     return { q: (DATA && DATA.q) || "", tab: TAB, ent: ENT, y: scrollNow() };
   }
-  /**
-   * A trail entry out of history.state, which is not ours to trust.
-   *
-   * Entries pushed by an earlier build are bare query strings, and they are
-   * still in the back stack of any window that was open across the change.
-   * One of those is a step with nothing said about how the page stood, which
-   * is exactly the old behaviour -- right for a record that never held it.
-   */
-  function asStep(x: unknown): Step | null {
-    if (typeof x === "string") return { q: x, tab: "word", ent: null, y: 0 };
-    if (!x || typeof x !== "object") return null;
-    const o = x as Record<string, unknown>;
-    if (typeof o.q !== "string") return null;
-    return {
-      q: o.q,
-      tab: typeof o.tab === "string" ? o.tab : "word",
-      ent: typeof o.ent === "number" ? o.ent : null,
-      y: typeof o.y === "number" ? o.y : 0,
-    };
+  function saveWord(step: Step, add: boolean): void {
+    if (!onWordPage()) return;
+    const index = trail.findIndex((item) => item.q === step.q);
+    if (index >= 0) trail[index] = step;
+    else if (add) trail.push(step);
   }
 
   /**
@@ -283,7 +258,8 @@ function run(): void {
     const bar = crumbBar;
     bar.innerHTML = "";
     fitCrumbs = undefined;
-    if (!TRAIL.length) {
+    const current = onWordPage() ? DATA!.q : "";
+    if (!trail.some((step) => step.q !== current)) {
       bar.hidden = true;
       return;
     }
@@ -293,47 +269,66 @@ function run(): void {
     const summary = document.createElement("summary");
     summary.className = "dcrumb";
     summary.textContent = "…";
-    summary.setAttribute("aria-label", "Earlier lookups");
+    summary.setAttribute("aria-label", "More visited words");
     const menu = document.createElement("div");
     menu.className = "dcrumb-menu";
     overflow.append(summary, menu);
     bar.appendChild(overflow);
 
-    const crumbs = TRAIL.map((s, i) => {
+    // After Clear, Back can show a word that is outside the new trail.
+    const words = current && !trail.some((step) => step.q === current) ? [...trail, stepHere()] : trail;
+    const crumbs: { crumb: HTMLElement; menuLink: HTMLAnchorElement }[] = [];
+    words.forEach((s, index) => {
       const crumb = document.createElement("span");
       crumb.className = "dcrumb-step";
-      const a = document.createElement("a");
-      a.href = "/dictionary?q=" + encodeURIComponent(s.q);
-      a.className = "dcrumb";
-      a.textContent = s.q;
-      a.title = s.q;
-      const goBack = (ev: MouseEvent) => {
-        ev.preventDefault();
-        if (ev.ctrlKey || ev.metaKey || ev.shiftKey) return;
-        overflow.open = false;
-        TRAIL = TRAIL.slice(0, i);
-        LANDAT = s.y;
-        look(s.q, true, s.tab, s.ent, false);
-      };
-      a.addEventListener("click", goBack);
-      const menuLink = a.cloneNode(true) as HTMLAnchorElement;
-      menuLink.addEventListener("click", goBack);
-      menu.appendChild(menuLink);
       const sep = document.createElement("span");
       sep.className = "dcrumb-sep";
       sep.textContent = "›";
       sep.setAttribute("aria-hidden", "true");
-      crumb.append(a, sep);
+      if (s.q === current) {
+        crumb.classList.add("dcrumb-current");
+        const here = document.createElement("span");
+        here.className = "dcrumb here";
+        here.textContent = current;
+        here.title = current;
+        here.setAttribute("aria-current", "page");
+        crumb.appendChild(here);
+      } else {
+        const a = document.createElement("a");
+        a.href = wordPageUrl(s);
+        a.className = "dcrumb";
+        a.textContent = s.q;
+        a.title = s.q;
+        const goBack = (ev: MouseEvent) => {
+          if (ev.ctrlKey || ev.metaKey || ev.shiftKey) return;
+          ev.preventDefault();
+          overflow.open = false;
+          LANDAT = s.y;
+          look(s.q, true, s.tab, s.ent, false);
+        };
+        a.addEventListener("click", goBack);
+        const menuLink = a.cloneNode(true) as HTMLAnchorElement;
+        menuLink.addEventListener("click", goBack);
+        menu.appendChild(menuLink);
+        crumb.appendChild(a);
+        crumbs.push({ crumb, menuLink });
+      }
+      if (index < words.length - 1) crumb.appendChild(sep);
       bar.appendChild(crumb);
-      return { crumb, menuLink };
     });
-    // The one you are on, named but not a link.
-    const here = document.createElement("span");
-    here.className = "dcrumb here";
-    here.textContent = DATA && DATA.q ? DATA.q : "";
-    here.title = here.textContent;
-    here.setAttribute("aria-current", "page");
-    bar.appendChild(here);
+    const clear = document.createElement("button");
+    clear.type = "button";
+    clear.className = "dcrumb dcrumb-clear";
+    clear.textContent = "×";
+    clear.title = "Clear breadcrumbs";
+    clear.setAttribute("aria-label", clear.title);
+    clear.onclick = () => {
+      trail = [];
+      saveWord(stepHere(), true);
+      renderCrumbs();
+      el<HTMLInputElement>("#d-q").focus();
+    };
+    bar.appendChild(clear);
     fitCrumbs = () => {
       overflow.hidden = true;
       crumbs.forEach(({ crumb, menuLink }) => {
@@ -341,7 +336,7 @@ function run(): void {
         menuLink.hidden = true;
       });
       for (const { crumb, menuLink } of crumbs) {
-        if (here.getBoundingClientRect().right <= bar.getBoundingClientRect().right) break;
+        if (clear.getBoundingClientRect().right <= bar.getBoundingClientRect().right) break;
         overflow.hidden = false;
         crumb.hidden = true;
         menuLink.hidden = false;
@@ -351,15 +346,12 @@ function run(): void {
     fitCrumbs();
   }
 
-  function rememberLookup(text: string): void {
-    const from = DATA && DATA.q ? DATA.q : "";
-    if (!from || from === text) return;
+  function rememberPage(): void {
     const here = stepHere();
-    TRAIL = TRAIL.concat(here);
+    saveWord(here, false);
     try {
-      const st = (history.state || {}) as Record<string, unknown>;
-      history.replaceState({ ...st, trail: TRAIL.slice(0, -1), y: here.y }, "");
-    } catch { /* A lookup still works when history state cannot be cloned. */ }
+      history.replaceState({ ...history.state, y: here.y }, "");
+    } catch { /* Saving the scroll position is optional. */ }
   }
   function followEntry(entry: Entry): void {
     const word = entryDisplay(entry, SCRIPT).head;
@@ -949,7 +941,10 @@ function run(): void {
   /* ---------------- Word ---------------- */
   let ENT: number | null = null;
   function openEntry(i: number | null): void {
+    rememberPage();
     ENT = i;
+    saveWord(stepHere(), true);
+    renderCrumbs();
     renderWord(DATA!);
     // The thesaurus follows the reading that is open, so it is redrawn with
     // the word rather than left showing the one that was open before.
@@ -2691,14 +2686,15 @@ function run(): void {
     }
     if (push) putUrl();
   }
+  function wordPageUrl({ q, ent, tab }: Step): string {
+    return "/dictionary?q=" + encodeURIComponent(q) +
+      (ent != null ? "&e=" + ent : "") + (tab !== "word" ? "&tab=" + tab : "");
+  }
   function putUrl(): void {
-    if (!DATA || !DATA.q) return;
-    const u =
-      "/dictionary?q=" +
-      encodeURIComponent(DATA.q) +
-      (ENT != null && DATA.entries && DATA.entries.length > 1 ? "&e=" + ENT : "") +
-      (TAB !== "word" ? "&tab=" + TAB : "");
-    history.pushState({ trail: TRAIL }, "", u);
+    if (!DATA?.q) return;
+    const step = stepHere();
+    if (DATA.entries.length <= 1) step.ent = null;
+    history.pushState(null, "", wordPageUrl(step));
   }
   let lookupRequest = 0;
   function look(
@@ -2709,6 +2705,7 @@ function run(): void {
     rec?: boolean,
     py?: string,
     selected?: Entry,
+    trackVisit = true,
   ): void {
     const request = ++lookupRequest;
     if (rec) LANDAT = null;
@@ -2718,7 +2715,7 @@ function run(): void {
       .then((r) => r.json())
       .then((d: DictData) => {
         if (request !== lookupRequest) return;
-        if (rec && d.q && !d.error) rememberLookup(d.q);
+        if (push && !d.error) rememberPage();
         DATA = d;
         // The box says what is on screen. Following a character used to open
         // a tab of its own, so the box was always the thing you had typed;
@@ -2746,6 +2743,7 @@ function run(): void {
         if (d.error) {
           el("#d-note").textContent = d.error;
           el("#d-tabs").hidden = true;
+          renderCrumbs();
           land();
           return;
         }
@@ -2763,9 +2761,9 @@ function run(): void {
           TABS.forEach((t) => {
             el("#pane-" + t).innerHTML = "";
           });
-          TRAIL = [];
           renderCrumbs();
           renderRecent();
+          if (push) history.pushState(null, "", "/dictionary");
           land();
           return;
         }
@@ -2789,7 +2787,7 @@ function run(): void {
           });
           sp.appendChild(ss);
           renderCrumbs();
-          if (push) history.pushState({ trail: TRAIL }, "", "/dictionary?q=" + encodeURIComponent(d.q));
+          if (push) history.pushState(null, "", "/dictionary?q=" + encodeURIComponent(d.q));
           land();
           return;
         }
@@ -2815,17 +2813,18 @@ function run(): void {
             pane.appendChild(s);
           }
           renderCrumbs();
-          if (push) history.pushState({ trail: TRAIL }, "", "/dictionary?q=" + encodeURIComponent(d.q));
+          if (push) history.pushState(null, "", "/dictionary?q=" + encodeURIComponent(d.q));
           land();
           return;
         }
-        renderCrumbs();
         renderWord(d);
         renderThesaurus(d);
         renderExamples(d);
         renderCharacter(d);
         renderEtymology(d);
         showTab(tab || TAB || "word", false);
+        if (trackVisit) saveWord({ ...stepHere(), y: LANDAT ?? 0 }, true);
+        renderCrumbs();
         if (push) putUrl();
         land();
       })
@@ -2850,25 +2849,17 @@ function run(): void {
       search();
     }
   });
-  window.addEventListener("popstate", boot);
-  function boot(): void {
-    // Whatever trail this history entry was pushed with. A first load, or an
-    // address typed in by hand, has none -- which is right: you followed
-    // nothing to get there.
-    const st = history.state as { trail?: unknown; y?: unknown } | null;
-    TRAIL =
-      st && Array.isArray(st.trail)
-        ? (st.trail as unknown[]).map(asStep).filter((s): s is Step => s !== null)
-        : [];
+  window.__ccDictionaryLookup = (url) => loadAddress(url.searchParams, true);
+  window.addEventListener("popstate", () => loadAddress(new URLSearchParams(location.search), false, false));
+  function loadAddress(sp: URLSearchParams, push: boolean, trackVisit = true): void {
     // Where this entry was left, if it was ever left rather than opened. A
     // first load and a typed-in address have none, and the top is right for
     // both.
-    LANDAT = st && typeof st.y === "number" ? st.y : null;
-    const sp = new URLSearchParams(location.search);
+    LANDAT = !push && typeof history.state?.y === "number" ? history.state.y : null;
     const q = sp.get("q") || "";
     el<HTMLInputElement>("#d-q").value = q;
     const e = parseInt(sp.get("e") || "", 10);
-    look(q, false, sp.get("tab") || "word", isNaN(e) ? null : e, false, sp.get("p") || "");
+    look(q, push, sp.get("tab") || "word", isNaN(e) ? null : e, push, sp.get("p") || "", undefined, trackVisit);
   }
-  boot();
+  loadAddress(new URLSearchParams(location.search), false);
 }
