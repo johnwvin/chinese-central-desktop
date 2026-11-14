@@ -175,9 +175,8 @@ function run(): void {
    * WHERE THIS LOOKUP CAME FROM, so following one is not a one-way door.
    *
    * The entries you passed through on the way here, oldest first, without the
-   * one on screen. A character clicked out of an entry pushes that entry on;
-   * a crumb clicked cuts the trail back to it; a search typed into the box is
-   * a fresh start and empties it.
+   * one on screen. Following an entry or submitting a search adds a step.
+   * Clicking a crumb cuts the trail back to it.
    *
    * IT LIVES IN history.state, not just in this variable. putUrl already
    * pushes an entry per lookup, so Back was always the other way home -- and a
@@ -262,41 +261,94 @@ function run(): void {
     setTimeout(put, 160);
   }
 
+  const crumbBar = el("#d-crumbs");
+  let fitCrumbs: (() => void) | undefined;
+  new ResizeObserver(() => fitCrumbs?.()).observe(crumbBar);
+  crumbBar.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape") return;
+    const overflow = crumbBar.querySelector<HTMLDetailsElement>("details[open]");
+    if (!overflow) return;
+    event.stopPropagation();
+    overflow.open = false;
+    overflow.querySelector("summary")?.focus();
+  });
+  document.addEventListener("pointerdown", (event) => {
+    const overflow = crumbBar.querySelector<HTMLDetailsElement>("details[open]");
+    if (overflow && event.target instanceof Node && !overflow.contains(event.target)) {
+      overflow.open = false;
+    }
+  });
+
   function renderCrumbs(): void {
-    const bar = el("#d-crumbs");
+    const bar = crumbBar;
     bar.innerHTML = "";
-    // Nothing to go back to is not a bar with one dead item in it.
+    fitCrumbs = undefined;
     if (!TRAIL.length) {
       bar.hidden = true;
       return;
     }
     bar.hidden = false;
-    TRAIL.forEach((s, i) => {
+    const overflow = document.createElement("details");
+    overflow.className = "dcrumb-overflow";
+    const summary = document.createElement("summary");
+    summary.className = "dcrumb";
+    summary.textContent = "…";
+    summary.setAttribute("aria-label", "Earlier lookups");
+    const menu = document.createElement("div");
+    menu.className = "dcrumb-menu";
+    overflow.append(summary, menu);
+    bar.appendChild(overflow);
+
+    const crumbs = TRAIL.map((s, i) => {
+      const crumb = document.createElement("span");
+      crumb.className = "dcrumb-step";
       const a = document.createElement("a");
       a.href = "/dictionary?q=" + encodeURIComponent(s.q);
       a.className = "dcrumb";
       a.textContent = s.q;
-      a.addEventListener("click", (ev) => {
+      a.title = s.q;
+      const goBack = (ev: MouseEvent) => {
         ev.preventDefault();
         if (ev.ctrlKey || ev.metaKey || ev.shiftKey) return;
-        // Back to that entry, and everything after it stops having happened.
-        // The page comes back as it was left -- the tab that was open, the
-        // entry that was chosen, and the place on it you were reading.
+        overflow.open = false;
         TRAIL = TRAIL.slice(0, i);
         LANDAT = s.y;
         look(s.q, true, s.tab, s.ent, false);
-      });
-      bar.appendChild(a);
+      };
+      a.addEventListener("click", goBack);
+      const menuLink = a.cloneNode(true) as HTMLAnchorElement;
+      menuLink.addEventListener("click", goBack);
+      menu.appendChild(menuLink);
       const sep = document.createElement("span");
       sep.className = "dcrumb-sep";
       sep.textContent = "›";
-      bar.appendChild(sep);
+      sep.setAttribute("aria-hidden", "true");
+      crumb.append(a, sep);
+      bar.appendChild(crumb);
+      return { crumb, menuLink };
     });
     // The one you are on, named but not a link.
     const here = document.createElement("span");
     here.className = "dcrumb here";
     here.textContent = DATA && DATA.q ? DATA.q : "";
+    here.title = here.textContent;
+    here.setAttribute("aria-current", "page");
     bar.appendChild(here);
+    fitCrumbs = () => {
+      overflow.hidden = true;
+      crumbs.forEach(({ crumb, menuLink }) => {
+        crumb.hidden = false;
+        menuLink.hidden = true;
+      });
+      for (const { crumb, menuLink } of crumbs) {
+        if (here.getBoundingClientRect().right <= bar.getBoundingClientRect().right) break;
+        overflow.hidden = false;
+        crumb.hidden = true;
+        menuLink.hidden = false;
+      }
+      if (overflow.hidden) overflow.open = false;
+    };
+    fitCrumbs();
   }
 
   function rememberLookup(text: string): void {
@@ -311,7 +363,6 @@ function run(): void {
   }
   function followEntry(entry: Entry): void {
     const word = entryDisplay(entry, SCRIPT).head;
-    rememberLookup(word);
     look(word, true, "word", null, true, entry.p, entry);
   }
   function link(text: string, wholeWord = false, onOpen?: (() => void) | null): HTMLElement {
@@ -342,7 +393,6 @@ function run(): void {
         onOpen();
         return;
       }
-      rememberLookup(text);
       look(text, true, "word", null, true);
     });
     return a;
@@ -2650,6 +2700,7 @@ function run(): void {
       (TAB !== "word" ? "&tab=" + TAB : "");
     history.pushState({ trail: TRAIL }, "", u);
   }
+  let lookupRequest = 0;
   function look(
     q: string,
     push?: boolean,
@@ -2659,11 +2710,15 @@ function run(): void {
     py?: string,
     selected?: Entry,
   ): void {
+    const request = ++lookupRequest;
+    if (rec) LANDAT = null;
     fetch("/api/central/dict?q=" + encodeURIComponent(q) + (rec ? "&rec=1" : ""), {
       cache: "no-store",
     })
       .then((r) => r.json())
       .then((d: DictData) => {
+        if (request !== lookupRequest) return;
+        if (rec && d.q && !d.error) rememberLookup(d.q);
         DATA = d;
         // The box says what is on screen. Following a character used to open
         // a tab of its own, so the box was always the thing you had typed;
@@ -2777,7 +2832,7 @@ function run(): void {
       .catch(() => {
         // A lookup that never arrived cannot be landed, and a place kept for
         // it would be spent on whatever was looked up next.
-        LANDAT = null;
+        if (request === lookupRequest) LANDAT = null;
       });
   }
   document.querySelectorAll<HTMLElement>("#d-tabs button").forEach((b) => {
@@ -2785,10 +2840,7 @@ function run(): void {
       showTab(b.dataset.tab!, true);
     });
   });
-  // A search typed into the box is a new train of thought rather than a step
-  // in the one on screen, so the crumbs go with it.
   function search(): void {
-    TRAIL = [];
     look(el<HTMLInputElement>("#d-q").value, true, "word", null, true);
   }
   el("#d-go").addEventListener("click", search);
