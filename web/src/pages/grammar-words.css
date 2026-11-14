@@ -1,5 +1,12 @@
 .grammar-words-search {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
   margin-bottom: 16px;
+}
+.grammar-words-search .d-qwrap {
+  min-width: min(220px, 100%);
 }
 .grammar-words {
   max-width: 1000px;
@@ -27,4 +34,36 @@
 }
 .grammar-word-pinyin {
   color: var(--yb-dim);
+}
+.grammar-test {
+  max-width: 560px;
+}
+.grammar-test-toolbar, .grammar-test-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.grammar-test-toolbar {
+  justify-content: space-between;
+  margin-bottom: 8px;
+  color: var(--yb-dim);
+  font-variant-numeric: tabular-nums;
+}
+.grammar-test-card {
+  display: grid;
+  align-content: center;
+  gap: 4px;
+  min-height: 180px;
+  padding: 16px;
+  text-align: center;
+  background: var(--yb-pane);
+  border: 1px solid var(--yb-bd);
+  border-radius: 12px;
+}
+.grammar-test-term {
+  font-size: clamp(24px, 6vw, 44px);
+}
+.grammar-test-actions {
+  justify-content: center;
+  margin-top: 8px;
 }
