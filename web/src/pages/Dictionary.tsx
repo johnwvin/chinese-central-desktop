@@ -149,7 +149,7 @@ export function Dictionary() {
           收藏 Favorites
         </a>
         <a className="d-ranks" href="/dictionary/grammar-words" target="_blank" rel="noreferrer">
-          Grammar Words
+          Grammar Terms
         </a>
         <span className="quiet" id="d-note"></span>
       </div>

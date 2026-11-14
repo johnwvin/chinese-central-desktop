@@ -6,10 +6,15 @@
   overflow-x: auto;
 }
 .grammar-words th {
-  padding: 8px 12px;
+  padding: 10px 12px;
   text-align: left;
+  color: #111;
+  font-size: 15px;
+  font-weight: 700;
+  border-top: 0;
 }
-.grammar-words td:first-child, .grammar-words td:last-child {
+.grammar-words th:first-child, .grammar-words td:first-child {
+  width: 36%;
   white-space: nowrap;
 }
 .grammar-words a {

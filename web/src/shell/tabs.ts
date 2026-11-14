@@ -91,7 +91,7 @@ const NAMES: Record<string, string> = {
   "/source": "Sources",
   "/dictionary/ranks": "Frequency Ranks",
   "/dictionary/favorites": "Favorites",
-  "/dictionary/grammar-words": "Grammar Words",
+  "/dictionary/grammar-words": "Grammar Terms",
 };
 
 // The same marks the game cards wear, so a game's tab looks like the card it
@@ -108,9 +108,8 @@ const PAGE_ICON: Record<string, string> = {
   "/browser": "\u{1F310}",
   "/books": "\u{1F4DA}", "/control": "\u2699\uFE0F",
   "/source": "\u{1F4C3}",
-  // The dictionary's two lists: the characters by how common they are, and
-  // the words that have been starred.
   "/dictionary/ranks": "\u{1F4CA}", "/dictionary/favorites": "\u2B50",
+  "/dictionary/grammar-words": "\u{1F4D8}",
 };
 
 export type Icon = { text: string } | { img: string };
