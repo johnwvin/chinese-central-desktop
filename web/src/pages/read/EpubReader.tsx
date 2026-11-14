@@ -738,7 +738,8 @@ export function EpubReader({ f }: { f: string }) {
               <div className="rd-bookmark-list">
                 {bookmarks.map((mark) => (
                   <div className="rd-bookmark" key={mark.id}>
-                    <button type="button" className="rd-bookmark-jump" onClick={() => goBookmark(mark)}>
+                    <button type="button" className="rd-bookmark-jump" title={mark.name || `Chapter ${mark.at + 1}`}
+                      onClick={() => goBookmark(mark)}>
                       <b>{mark.name || `Chapter ${mark.at + 1}`}</b>
                       {mark.name ? <span>Chapter {mark.at + 1}</span> : null}
                     </button>

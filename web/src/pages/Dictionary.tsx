@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { HubPage } from "./HubPage";
 import { startDictionary } from "./dict/page";
+import { searchModes } from "./dict/search";
 import "./dictionary.css";
 
 /** The six tabs, in the order the old page listed them. */
@@ -53,10 +54,12 @@ export function Dictionary() {
         </button>
       )}
       <h1>Dictionary</h1>
-      <div
-        className="searchbar"
-        style={{ display: "flex", gap: "12px", flexWrap: "wrap", margin: "0 0 18px" }}
-      >
+      <form id="d-search" className="searchbar d-searchbar" role="search" aria-label="Dictionary search">
+        <select id="d-mode" aria-label="Search by" title="Search by">
+          {Object.entries(searchModes).map(([mode, settings]) => (
+            <option key={mode} value={mode}>{settings.label}</option>
+          ))}
+        </select>
         {/* The field and its clear cross travel together, so the cross can be
             put inside the field's right-hand end. The sizing that used to be
             on the input is here now: the wrapper is what the row lays out. */}
@@ -64,7 +67,8 @@ export function Dictionary() {
           <input
             type="search"
             id="d-q"
-            placeholder="Characters, pinyin (zhong1 wen2), or English"
+            placeholder="Search"
+            aria-label="Dictionary query"
             autoComplete="off"
             spellCheck={false}
           />
@@ -98,11 +102,15 @@ export function Dictionary() {
             </svg>
           </button>
         </span>
+        <select id="d-match" aria-label="Match" title="Match" hidden></select>
+        <input id="d-stroke-count" type="number" min="1" max="100" placeholder="Strokes"
+          aria-label="Total stroke count" title="Total stroke count" hidden />
         <button
-          type="button"
+          type="submit"
           className="btn"
           id="d-go"
           title="Search"
+          aria-label="Search"
           style={{
             display: "inline-flex",
             alignItems: "center",
@@ -125,6 +133,8 @@ export function Dictionary() {
             <path d="m21 21-4.3-4.3"></path>
           </svg>
         </button>
+      </form>
+      <div className="d-dictionary-tools">
         <div className="script-toggle" id="script-toggle">
           <button type="button" data-s="simp" className="here">
             简 Simplified

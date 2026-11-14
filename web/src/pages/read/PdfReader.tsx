@@ -76,10 +76,6 @@ export function PdfReader({ f }: { f: string }) {
   }, [f]);
 
   useEffect(() => {
-    control.current?.layoutChanged();
-  }, [sideOpen]);
-
-  useEffect(() => {
     let live = true;
     loadPdfjs()
       .then((lib) => lib.getDocument(url).promise.then((doc) => ({ lib, doc })))
@@ -152,19 +148,21 @@ export function PdfReader({ f }: { f: string }) {
             const range = matchRange(layer, query, occurrence);
             if (range) showFindRange(range);
           }} />
-        {!sideOpen && (
-          <button
-            type="button"
-            className="btn plain pf-open-side"
-            aria-expanded={sideOpen}
-            aria-controls="pf-sidebar"
-            title="Show PDF controls and navigation"
-            onClick={() => setSideOpen(true)}
-          >
-            &#9776;
-          </button>
-        )}
-        <div className={`pf-reader-layout${sideOpen ? " side-open" : ""}`}>
+        <div className="pf-reader-layout">
+          <div className="pf-side-layer">
+          {!sideOpen && (
+            <button
+              type="button"
+              className="pf-icon-button pf-menu-button pf-open-side"
+              aria-expanded={false}
+              aria-controls="pf-sidebar"
+              aria-label="Show PDF controls and navigation"
+              title="Show PDF controls and navigation"
+              onClick={() => setSideOpen(true)}
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h14" /></svg>
+            </button>
+          )}
           <aside id="pf-sidebar" aria-label="PDF navigation" hidden={!sideOpen}>
             <div className="pf-side-controls">
               <div className="pf-side-head">
@@ -173,6 +171,7 @@ export function PdfReader({ f }: { f: string }) {
                   className="pf-icon-button pf-menu-button"
                   aria-expanded={sideOpen}
                   aria-controls="pf-sidebar"
+                  aria-label="Hide PDF controls and navigation"
                   title="Hide PDF controls and navigation"
                   onClick={() => setSideOpen(false)}
                 >
@@ -306,7 +305,8 @@ export function PdfReader({ f }: { f: string }) {
                 <div className="rd-bookmark-list">
                   {bookmarks.map((mark) => (
                     <div className="rd-bookmark" key={mark.id}>
-                      <button type="button" className="rd-bookmark-jump" onClick={() => control.current?.gotoSpot(mark.at, mark.off)}>
+                      <button type="button" className="rd-bookmark-jump" title={mark.name || `Page ${mark.at}`}
+                        onClick={() => control.current?.gotoSpot(mark.at, mark.off)}>
                         <b>{mark.name || `Page ${mark.at}`}</b>
                         {mark.name ? <span>Page {mark.at}</span> : null}
                       </button>
@@ -321,6 +321,7 @@ export function PdfReader({ f }: { f: string }) {
               </div>}
             </section>
           </aside>
+          </div>
           <div id="pf-pages" ref={pagesBox} />
         </div>
       </div>
@@ -500,9 +501,7 @@ class Controller {
   // The sheet, as wide as the window allows and no wider than the paper
   // really is.
   private fitScale(w1: number) {
-    const sidebar = this.thumbs.closest("aside");
-    const side = sidebar && !sidebar.hidden ? sidebar.getBoundingClientRect().width + 18 : 0;
-    const room = Math.min(Math.max(260, (this.outer.clientWidth || 900) - side), 1100) - 8;
+    const room = Math.min(Math.max(260, this.outer.clientWidth || 900), 1100) - 8;
     return Math.max(0.2, Math.min(2.5, room / w1));
   }
 
@@ -822,10 +821,6 @@ class Controller {
       this.soon();
     }, 250);
   };
-
-  layoutChanged() {
-    this.onResize();
-  }
 
   bookmarkSpot() {
     this.note();

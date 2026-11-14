@@ -342,12 +342,9 @@ func runeLen(s string) int { return len([]rune(s)) }
 // "NI3HAO3" all lead to the same place. "u:" and "v" both mean ü.
 func PyNorm(p string) string {
 	var b strings.Builder
-	for _, ch := range strings.ToLower(p) {
-		switch {
-		case ch >= 'a' && ch <= 'z':
-			b.WriteRune(ch)
-		case ch == 'v':
-			b.WriteRune('v')
+	for _, ch := range strings.ReplaceAll(strings.ToLower(p), "u:", "ü") {
+		if letter, _ := pinyinLetter(ch); letter != 0 {
+			b.WriteByte(letter)
 		}
 	}
 	return b.String()

@@ -52,6 +52,27 @@
    line instead. */
 .d-qwrap { position: relative; display: flex; flex: 1 1 280px;
   min-width: min(100%, 360px); max-width: 460px; }
+.d-searchbar { display: flex; align-items: stretch; flex-wrap: wrap; gap: 8px;
+  margin: 0 0 10px; }
+.d-searchbar .d-qwrap { min-width: min(170px, 100%); }
+.d-searchbar > select, .d-searchbar #d-stroke-count {
+  width: auto; padding: 7px 9px; border: 1px solid var(--line);
+  border-radius: 9px; font: inherit; color: var(--ink); background: var(--card);
+}
+.d-searchbar #d-stroke-count { width: 100px; }
+.d-searchbar > [hidden] { display: none; }
+.d-dictionary-tools { display: flex; align-items: center; flex-wrap: wrap;
+  gap: 8px; margin: 0 0 16px; }
+.d-search-pages { display: flex; align-items: center; gap: 8px;
+  justify-content: flex-end; padding: 8px 12px; border-top: 1px solid var(--yb-bd-soft);
+  color: var(--yb-dim); font-size: 14px; font-variant-numeric: tabular-nums; }
+.d-search-pages button { width: 34px; height: 32px; padding: 0;
+  border: 1px solid var(--yb-bd); border-radius: 7px; background: var(--yb-btn);
+  color: var(--yb-ink); font: inherit; cursor: pointer; }
+.d-search-pages button:disabled { opacity: .45; cursor: default; }
+.d-search-pages button:not(:disabled):hover, .d-search-pages button:focus-visible {
+  border-color: var(--yb-link); }
+.d-recent-mode { margin-inline-start: 10px; }
 /* `max-width: none` because `.searchbar input` holds every field in this bar
    to 430px, and this one is inside a 460px wrapper -- left capped, the input
    stopped 30px short of the wrapper and the cross, pinned to the wrapper's

@@ -282,18 +282,26 @@ func (h Hub) Recent() []any {
 
 // RecentAdd puts a search at the front of the recent-searches ring, capped so
 // it never balloons.
-func (h Hub) RecentAdd(q string) {
+func (h Hub) RecentAdd(q, mode, match, strokes string) {
 	q = strings.TrimSpace(q)
-	if q == "" || runeLen(q) > 60 {
+	if (q == "" && (mode != "radical" || strokes == "")) || runeLen(q) > 60 {
 		return
 	}
 	h.recentMu.Lock()
 	defer h.recentMu.Unlock()
 
 	list := h.Recent()
-	kept := []any{q}
+	var entry any = q
+	if mode != "" && mode != "auto" {
+		entry = map[string]string{"q": q, "mode": mode, "match": match, "strokes": strokes}
+	}
+	kept := []any{entry}
 	for _, x := range list {
-		if s, ok := x.(string); ok && s == q {
+		if s, ok := x.(string); ok && (mode == "" || mode == "auto") && s == q {
+			continue
+		}
+		if saved, ok := x.(map[string]any); ok && saved["q"] == q && saved["mode"] == mode &&
+			saved["match"] == match && saved["strokes"] == strokes {
 			continue
 		}
 		kept = append(kept, x)

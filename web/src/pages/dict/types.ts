@@ -120,6 +120,7 @@ export interface DictData {
   related?: Related;
   related_by_entry?: Related[];
   segments?: Segment[];
+  search?: { page: number; pages: number; total: number };
   error?: string;
   // Shown before anything has been searched for: how much there is to search.
   total?: number;

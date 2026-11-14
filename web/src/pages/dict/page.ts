@@ -15,6 +15,7 @@ import { defIn, entryDisplay } from "./text";
 import { dictionaryHsk } from "./hsk";
 import { watchStudy } from "../hsk/study";
 import { pinyinPieces, pyPlaySeq } from "./pinyin";
+import { queryLabel, searchMode, searchModes, searchParams } from "./search";
 import { convertScriptText } from "../read/scriptMode";
 import {
   favoriteKey,
@@ -53,6 +54,7 @@ function run(): void {
   const el = <T extends Element = HTMLElement>(s: string) =>
     document.querySelector(s) as T;
   let DATA: DictData | null = null;
+  let activeSearch: URLSearchParams | undefined;
   let refreshHsk: (() => void) | undefined;
   watchStudy(() => refreshHsk?.());
   let TAB = "word";
@@ -94,7 +96,7 @@ function run(): void {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ script: SCRIPT }),
       }).catch(() => {});
-      if (DATA && DATA.q) look(DATA.q, false, TAB, ENT);
+      if (DATA && (DATA.q || activeSearch)) look(DATA.q, false, TAB, ENT, false, undefined, undefined, true, activeSearch);
     });
   });
   // The stroke speed lives on disk with the rest of the user's data.
@@ -113,7 +115,7 @@ function run(): void {
       if ((p.script === "trad" || p.script === "simp") && p.script !== SCRIPT) {
         SCRIPT = p.script;
         paintScript();
-        if (DATA && DATA.q) look(DATA.q, false, TAB, ENT);
+        if (DATA && (DATA.q || activeSearch)) look(DATA.q, false, TAB, ENT, false, undefined, undefined, true, activeSearch);
       }
     })
     .catch(() => {});
@@ -2622,12 +2624,15 @@ function run(): void {
   }
 
   /* ---------------- recent searches ---------------- */
+  type RecentSearch = string | { q: string; mode: string; match?: string; strokes?: string };
+
   function renderRecent(): void {
+    const request = lookupRequest;
     fetch("/api/central/recent", { cache: "no-store" })
       .then((r) => r.json())
-      .then((rr: any) => {
-        const list: string[] = rr.list || [];
-        if (!list.length) return;
+      .then((rr: { list?: RecentSearch[] }) => {
+        const list = rr.list || [];
+        if (request !== lookupRequest || !list.length) return;
         const pane = el("#pane-word");
         pane.innerHTML = "";
         TABS.forEach((t) => {
@@ -2645,13 +2650,31 @@ function run(): void {
         const info = document.createElement("span");
         info.className = "quiet";
         function addRows() {
-          list.slice(shown, shown + PER).forEach((q2) => {
+          list.slice(shown, shown + PER).forEach((item) => {
             const tr = document.createElement("tr");
             const td = document.createElement("td");
             const zw = document.createElement("span");
             zw.className = "zhword";
-            zw.appendChild(link(q2, true));
             td.appendChild(zw);
+            if (typeof item === "string") {
+              zw.appendChild(link(item, true));
+            } else {
+              const params = searchParams(item.q, item.mode, item.match, item.strokes);
+              const a = document.createElement("a");
+              a.href = "/dictionary?" + params;
+              a.textContent = queryLabel(params);
+              a.addEventListener("click", (event) => {
+                if (event.ctrlKey || event.metaKey || event.shiftKey) return;
+                event.preventDefault();
+                loadAddress(params, true);
+              });
+              zw.appendChild(a);
+              const mode = searchMode(item.mode);
+              const label = document.createElement("small");
+              label.className = "quiet d-recent-mode";
+              label.textContent = searchModes[mode].label;
+              td.appendChild(label);
+            }
             tr.appendChild(td);
             t.appendChild(tr);
           });
@@ -2670,6 +2693,68 @@ function run(): void {
   }
 
   /* ---------------- tabs and search ---------------- */
+  const modeInput = el<HTMLSelectElement>("#d-mode");
+  const matchInput = el<HTMLSelectElement>("#d-match");
+  const strokesInput = el<HTMLInputElement>("#d-stroke-count");
+  const searchBox = el<HTMLInputElement>("#d-q");
+
+  function updateSearchControls(params: URLSearchParams): void {
+    const mode = searchMode(params.get("mode"));
+    const { placeholder, matches } = searchModes[mode];
+    modeInput.value = mode;
+    searchBox.placeholder = placeholder;
+    matchInput.replaceChildren(...matches.map(([value, label]) => new Option(label, value)));
+    matchInput.hidden = matches.length === 0;
+    matchInput.value = params.get("match") ?? "";
+    if (matchInput.selectedIndex < 0 && matches.length) matchInput.selectedIndex = 0;
+    strokesInput.hidden = mode !== "radical";
+    strokesInput.disabled = strokesInput.hidden;
+    strokesInput.value = params.get("strokes") ?? "";
+  }
+
+  function renderSearchResults(d: DictData, params: URLSearchParams): void {
+    TABS.forEach((tab) => {
+      el("#pane-" + tab).hidden = tab !== "word";
+    });
+    const pane = el("#pane-word");
+    pane.innerHTML = "";
+    const query = "“" + queryLabel(params) + "”";
+    if (!d.entries.length) {
+      note(pane, "Nothing found for " + query + ".");
+      return;
+    }
+    const results = sec("Matches for " + query);
+    const t = table(results);
+    d.entries.forEach((entry) => entryTr(t, entry));
+    const info = d.search;
+    if (info && info.pages > 1) {
+      const nav = document.createElement("nav");
+      nav.className = "d-search-pages";
+      nav.setAttribute("aria-label", "Search results pages");
+      const count = document.createElement("span");
+      count.textContent = `${info.total.toLocaleString()} · ${info.page} / ${info.pages}`;
+      count.setAttribute("aria-label", `${info.total} results, page ${info.page} of ${info.pages}`);
+      nav.appendChild(count);
+      for (const direction of [-1, 1]) {
+        const page = info.page + direction;
+        const button = document.createElement("button");
+        button.type = "button";
+        button.textContent = direction < 0 ? "‹" : "›";
+        button.title = direction < 0 ? "Previous page" : "Next page";
+        button.setAttribute("aria-label", button.title);
+        button.disabled = page < 1 || page > info.pages;
+        button.onclick = () => {
+          const next = new URLSearchParams(params);
+          next.set("page", String(page));
+          loadAddress(next, true, true, false);
+        };
+        nav.appendChild(button);
+      }
+      t.before(nav);
+    }
+    pane.appendChild(results);
+  }
+
   function showTab(tab: string, push?: boolean): void {
     if (TABS.indexOf(tab) < 0) tab = "word";
     TAB = tab;
@@ -2706,10 +2791,15 @@ function run(): void {
     py?: string,
     selected?: Entry,
     trackVisit = true,
+    filters?: URLSearchParams,
   ): void {
     const request = ++lookupRequest;
     if (rec) LANDAT = null;
-    fetch("/api/central/dict?q=" + encodeURIComponent(q) + (rec ? "&rec=1" : ""), {
+    const params = filters ?? searchParams(q, "auto");
+    if (push) updateSearchControls(params);
+    const apiParams = new URLSearchParams(params);
+    if (rec) apiParams.set("rec", "1");
+    fetch("/api/central/dict?" + apiParams, {
       cache: "no-store",
     })
       .then((r) => r.json())
@@ -2717,6 +2807,7 @@ function run(): void {
         if (request !== lookupRequest) return;
         if (push && !d.error) rememberPage();
         DATA = d;
+        activeSearch = d.search ? params : undefined;
         // The box says what is on screen. Following a character used to open
         // a tab of its own, so the box was always the thing you had typed;
         // now the pane moves under it and a stale query there is a lie about
@@ -2757,13 +2848,13 @@ function run(): void {
             : "";
         const cjk = (d.chars || []).length > 0;
         el("#d-tabs").hidden = !cjk || !!d.segments;
-        if (!d.q) {
+        if (!d.q && !d.search) {
           TABS.forEach((t) => {
             el("#pane-" + t).innerHTML = "";
           });
           renderCrumbs();
           renderRecent();
-          if (push) history.pushState(null, "", "/dictionary");
+          if (push) history.pushState(null, "", params.get("mode") ? "/dictionary?" + params : "/dictionary");
           land();
           return;
         }
@@ -2791,29 +2882,10 @@ function run(): void {
           land();
           return;
         }
-        if (!cjk) {
-          // Pinyin or English: a results list.
-          TABS.forEach((t) => {
-            el("#pane-" + t).hidden = t !== "word";
-          });
-          const pane = el("#pane-word");
-          pane.innerHTML = "";
-          // The words that were searched for, in quotes: a list of matches is
-          // about something, and saying which is the difference between a
-          // heading and a label.
-          const said = "“" + d.q + "”";
-          if (!d.entries.length) {
-            note(pane, "Nothing found for " + said + ".");
-          } else {
-            const s = sec("Matches for " + said);
-            const t = table(s);
-            d.entries.forEach((e) => {
-              entryTr(t, e);
-            });
-            pane.appendChild(s);
-          }
+        if (!cjk || d.search) {
+          renderSearchResults(d, params);
           renderCrumbs();
-          if (push) history.pushState(null, "", "/dictionary?q=" + encodeURIComponent(d.q));
+          if (push) history.pushState(null, "", "/dictionary?" + params);
           land();
           return;
         }
@@ -2839,27 +2911,27 @@ function run(): void {
       showTab(b.dataset.tab!, true);
     });
   });
-  function search(): void {
-    look(el<HTMLInputElement>("#d-q").value, true, "word", null, true);
-  }
-  el("#d-go").addEventListener("click", search);
-  el("#d-q").addEventListener("keydown", (e) => {
-    if ((e as KeyboardEvent).key === "Enter") {
-      e.preventDefault();
-      search();
-    }
+  modeInput.addEventListener("change", () => {
+    updateSearchControls(searchParams(searchBox.value, modeInput.value));
+  });
+  el("#d-search").addEventListener("submit", (event) => {
+    event.preventDefault();
+    loadAddress(searchParams(searchBox.value, modeInput.value, matchInput.value, strokesInput.value), true);
   });
   window.__ccDictionaryLookup = (url) => loadAddress(url.searchParams, true);
   window.addEventListener("popstate", () => loadAddress(new URLSearchParams(location.search), false, false));
-  function loadAddress(sp: URLSearchParams, push: boolean, trackVisit = true): void {
+  function loadAddress(sp: URLSearchParams, push: boolean, trackVisit = true, record = push): void {
     // Where this entry was left, if it was ever left rather than opened. A
     // first load and a typed-in address have none, and the top is right for
     // both.
     LANDAT = !push && typeof history.state?.y === "number" ? history.state.y : null;
     const q = sp.get("q") || "";
-    el<HTMLInputElement>("#d-q").value = q;
+    const params = searchParams(q, sp.get("mode") ?? "", sp.get("match") ?? "", sp.get("strokes") ?? "");
+    if (params.has("mode") && sp.has("page")) params.set("page", sp.get("page")!);
+    searchBox.value = q;
+    if (!push) updateSearchControls(params);
     const e = parseInt(sp.get("e") || "", 10);
-    look(q, push, sp.get("tab") || "word", isNaN(e) ? null : e, push, sp.get("p") || "", undefined, trackVisit);
+    look(q, push, sp.get("tab") || "word", isNaN(e) ? null : e, record, sp.get("p") || "", undefined, trackVisit, params);
   }
   loadAddress(new URLSearchParams(location.search), false);
 }

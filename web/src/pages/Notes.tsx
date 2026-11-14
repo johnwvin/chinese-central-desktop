@@ -14,6 +14,7 @@ export function Notes() {
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const [dirty, setDirty] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   useEffect(() => {
     let live = true;
     void api.notes().then((value) => {
@@ -72,7 +73,13 @@ export function Notes() {
   return <HubPage name="notes">
     <h1>Notebook</h1>
     <div className="plain-notebook">
-      <aside aria-label="Notes">
+      <div className="notebook-sidebar-layer">
+      <button type="button" className="btn notebook-sidebar-toggle" aria-controls="notebook-sidebar"
+        aria-expanded={sidebarOpen} aria-label={sidebarOpen ? "Hide the list" : "Show the list"}
+        title={sidebarOpen ? "Hide the list" : "Show the list"} onClick={() => setSidebarOpen(!sidebarOpen)}>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h14" /></svg>
+      </button>
+      <aside id="notebook-sidebar" aria-label="Notes" hidden={!sidebarOpen}>
         <button className="btn" type="button" disabled={busy} onClick={() => void choose(blank())}>New note</button>
         <input type="search" aria-label="Search notes" placeholder="Search" value={query} onChange={(event) => setQuery(event.target.value)} />
         <ul>{list.filter((note) => (note.title + " " + note.body).toLowerCase().includes(query.toLowerCase())).map((note) =>
@@ -80,6 +87,7 @@ export function Notes() {
             {note.title || "Untitled"}{note.folder && <small>{note.folder}</small>}
           </button></li>)}</ul>
       </aside>
+      </div>
       <div className="notebook-editor">
         <input aria-label="Title" placeholder="Title" value={draft.title} disabled={busy} onChange={(event) => edit({ title: event.target.value })} />
         <div className="notebook-folders">

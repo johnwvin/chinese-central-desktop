@@ -91,13 +91,16 @@ func (s *Server) serveCentral(w http.ResponseWriter, r *http.Request, name strin
 	case name == "prefs" && r.Method == http.MethodGet:
 		writeRaw(w, http.StatusOK, s.prefs.Read())
 	case name == "dict" && r.Method == http.MethodGet:
-		q := r.URL.Query().Get("q")
+		params := r.URL.Query()
+		q := params.Get("q")
 		// A full page load with ?q= is a real search -- the nav bars submit
 		// here. In-page link clicks never reload, and never record.
-		if r.URL.Query().Get("rec") == "1" {
-			s.hub.RecentAdd(q)
+		page, _ := strconv.Atoi(params.Get("page"))
+		options := dict.SearchOptions{Mode: params.Get("mode"), Match: params.Get("match"), Strokes: params.Get("strokes"), Page: page}
+		if params.Get("rec") == "1" {
+			s.hub.RecentAdd(q, options.Mode, options.Match, options.Strokes)
 		}
-		writeJSON(w, http.StatusOK, s.dict.Query(q))
+		writeJSON(w, http.StatusOK, s.dict.Search(q, options))
 	case name == "hover" && r.Method == http.MethodGet:
 		at, _ := strconv.Atoi(r.URL.Query().Get("at"))
 		writeJSON(w, http.StatusOK, s.dict.Hover(r.URL.Query().Get("text"), at))
