@@ -2650,7 +2650,7 @@ function run(): void {
             const td = document.createElement("td");
             const zw = document.createElement("span");
             zw.className = "zhword";
-            zw.appendChild(link(q2));
+            zw.appendChild(link(q2, true));
             td.appendChild(zw);
             tr.appendChild(td);
             t.appendChild(tr);
