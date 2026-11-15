@@ -209,14 +209,16 @@ export function Favorites() {
                       <span className="pyrun">
                         {pinyinPieces(f.p).map((piece, i) =>
                           piece.file ? (
-                            <span
+                            <button
                               key={i}
+                              type="button"
                               className="pys"
                               title={"Play " + piece.text}
+                              aria-label={"Play " + piece.text}
                               onClick={() => pyPlaySeq([piece.file])}
                             >
                               {piece.text}
-                            </span>
+                            </button>
                           ) : (
                             <span key={i}>{piece.text}</span>
                           ),

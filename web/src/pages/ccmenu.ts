@@ -383,7 +383,7 @@ export function installContextMenu() {
   const item = (label: string, icon: string, fn: () => void) => {
     const d = document.createElement("div");
     d.style.cssText =
-      "padding:8px 12px;border-radius:7px;white-space:nowrap;" +
+      "padding:8px 12px;border-radius:7px;white-space:nowrap;cursor:pointer;" +
       "display:flex;align-items:center;gap:10px";
     d.innerHTML = icon + "<span></span>";
     (d.lastElementChild as HTMLElement).textContent = label;

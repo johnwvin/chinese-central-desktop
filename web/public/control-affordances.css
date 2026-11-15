@@ -1,0 +1,26 @@
+:where(button, select, input:is([type="button"], [type="submit"], [type="reset"], [type="image"], [type="checkbox"], [type="radio"]),
+  a[href], summary, [role="button"], [role="tab"], [role="menuitem"], [role="menuitemcheckbox"], [role="menuitemradio"],
+  [role="switch"], [role="checkbox"], [role="radio"]):not(:disabled):not([aria-disabled="true"]),
+label:has(input:is([type="checkbox"], [type="radio"]):enabled) {
+  cursor: pointer;
+}
+
+:where(button, select, input, a, summary):is(:disabled, [aria-disabled="true"]),
+[aria-disabled="true"] {
+  cursor: default;
+}
+
+input[type="search"]:enabled:not([readonly])::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  width: 36px;
+  height: 28px;
+  margin-inline-end: -4px;
+  background-color: currentColor;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 6l12 12M18 6L6 18' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E") center / 20px no-repeat;
+  opacity: .62;
+  cursor: pointer;
+}
+
+input[type="search"]:enabled:not([readonly])::-webkit-search-cancel-button:hover {
+  opacity: 1;
+}

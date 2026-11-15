@@ -255,27 +255,6 @@ th {
   font-size: 12px;
 }
 
-/* THE CLEAR CROSS IS A BIGGER TARGET THAN IT LOOKS.
-   Chromium draws its own cross in a search field, about fourteen pixels
-   square, and that is the whole of the click target -- a small thing to hit,
-   and it carries the arrow cursor, so it does not look like something to
-   press either.
-
-   Padding rather than width, and no `appearance: none`: the browser goes on
-   drawing its own cross at its own size, and the padding grows only the box
-   around it. The cross does not get bigger; the area that answers to a click
-   does. Taking the glyph over -- appearance:none plus a mask -- would have
-   let the size be set exactly, and would also have meant that anywhere the
-   mask failed to load there would be no cross at all rather than a small
-   one. Not worth it for a hit target.
-
-   The negative margin lets the wider box reach into the field's own padding
-   instead of pushing the text along. */
-input[type="search"]::-webkit-search-cancel-button {
-  
-  padding: 9px;
-  margin-right: -5px;
-}
 
 .location-settings { display:grid; gap:20px; max-width:700px; }
 .location-form { display:flex; flex-wrap:wrap; align-items:end; gap:8px; }

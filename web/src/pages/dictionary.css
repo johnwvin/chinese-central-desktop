@@ -45,8 +45,6 @@
   --yb-btn:#232a33; --yb-link:#f0b429; --yb-quiet:#9aa6b2;
   --yb-dim:#aab4be; --yb-faint:#8a95a1; --yb-tree:#4a5460;
   --yb-icon:#cfd6dd; }
-.wrap-dictionary button:enabled:not([aria-disabled="true"]) { cursor: pointer; }
-.wrap-dictionary button:is(:disabled, [aria-disabled="true"]) { cursor: default; }
 /* The search field and its own clear cross. The wrapper carries the sizing
    the input used to: never squeezed narrower than the placeholder, because in
    a split pane the field shrank to its automatic minimum and the prompt was
@@ -362,10 +360,11 @@
 .zhword .trad { color: var(--yb-faint); }
 /* Pinyin stacked under the characters in the related-words cards. It
    keeps to one line -- the word above never dictates its width. */
-/* Pinyin you can click: each syllable speaks on its own, and a speaker
-   fades in at the end of the run so it is clear the line is playable. */
-.pys {  }
+/* Playable pinyin keeps the same text layout as the reading around it. */
+button.pys { appearance: none; border: 0; padding: 0; margin: 0; background: none;
+  color: inherit; font: inherit; }
 .pys:hover { text-decoration: underline; text-underline-offset: 2px; }
+.pys:focus-visible { box-shadow: 0 0 0 1px var(--yb-link); border-radius: 2px; }
 .zhpy { color: var(--yb-dim); font-size: 15px; margin-top: 2px;
   white-space: nowrap; }
 .ex-zh { font-size: 18px; }

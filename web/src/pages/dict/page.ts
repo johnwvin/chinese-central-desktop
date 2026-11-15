@@ -489,10 +489,12 @@ function run(): void {
         s.appendChild(document.createTextNode(text));
         return;
       }
-      const w = document.createElement("span");
+      const w = document.createElement("button");
+      w.type = "button";
       w.className = "pys";
       w.textContent = text;
       w.title = "Play " + text;
+      w.setAttribute("aria-label", w.title);
       w.addEventListener("click", (ev) => {
         ev.stopPropagation();
         pyPlaySeq([file]);
