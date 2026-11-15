@@ -149,7 +149,7 @@ export function Dictionary() {
           收藏 Favorites
         </a>
         <a className="d-ranks" href="/dictionary/grammar-words" target="_blank" rel="noreferrer">
-          Grammar Terms
+          <span className="zh" data-simp="语法术语" data-trad="語法術語">语法术语</span> Grammar Terms
         </a>
       </div>
       </div>

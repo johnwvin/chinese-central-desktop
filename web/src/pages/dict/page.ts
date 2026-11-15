@@ -82,7 +82,7 @@ function run(): void {
     document.querySelectorAll<HTMLElement>("#script-toggle button").forEach((b) => {
       b.classList.toggle("here", b.dataset.s === SCRIPT);
     });
-    document.querySelectorAll<HTMLElement>("#d-tabs .zh").forEach((label) => {
+    document.querySelectorAll<HTMLElement>("#d-tabs .zh, .d-ranks .zh").forEach((label) => {
       label.textContent = SCRIPT === "trad" ? label.dataset.trad ?? "" : label.dataset.simp ?? "";
     });
   }

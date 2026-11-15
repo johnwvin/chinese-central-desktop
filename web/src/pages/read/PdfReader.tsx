@@ -181,7 +181,6 @@ export function PdfReader({ f }: { f: string }) {
             >
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h14" /></svg>
             </button>
-            {zoomControls}
             </div>
           )}
           <aside id="pf-sidebar" aria-label="PDF navigation" hidden={!sideOpen}>
@@ -375,6 +374,9 @@ class Controller {
   private at = 1;
   private settled = 0;
   private refit = 0;
+  private wheelFrame = 0;
+  private wheelDelta = 0;
+  private zoomRequest = 0;
   private live = true;
   /**
    * Where you are reading: which sheet, and how far down it.
@@ -498,12 +500,14 @@ class Controller {
     this.live = false;
     window.removeEventListener("scroll", this.soon);
     window.removeEventListener("resize", this.onResize);
+    window.removeEventListener("wheel", this.onWheel);
     document.removeEventListener("visibilitychange", this.soon);
     window.removeEventListener("focus", this.soon);
     document.removeEventListener("keydown", this.onKey);
     this.thumbWatch?.disconnect();
     window.clearTimeout(this.settled);
     window.clearTimeout(this.refit);
+    cancelAnimationFrame(this.wheelFrame);
   }
 
   // The sheet, as wide as the window allows and no wider than the paper
@@ -750,7 +754,7 @@ class Controller {
     const sheet = this.sheets[this.spot.page - 1];
     if (!sheet) return;
     this.draw(this.spot.page);
-    window.scrollTo(0, Math.max(0, sheet.offsetTop + this.spot.frac * sheet.offsetHeight));
+    window.scrollTo(window.scrollX, Math.max(0, sheet.offsetTop + this.spot.frac * sheet.offsetHeight));
   }
 
   private soon = () => {
@@ -762,6 +766,7 @@ class Controller {
     this.sweep();
     window.addEventListener("scroll", this.soon, { passive: true });
     window.addEventListener("resize", this.onResize);
+    window.addEventListener("wheel", this.onWheel, { passive: false });
     // And when the tab is finally looked at, in case it was opened behind
     // this one and nothing has scrolled since.
     document.addEventListener("visibilitychange", this.soon);
@@ -778,6 +783,20 @@ class Controller {
     void this.zoom(this.scale * by, false);
   }
 
+  private onWheel = (event: WheelEvent) => {
+    if (!event.ctrlKey || !event.deltaY) return;
+    event.preventDefault();
+    const units = event.deltaMode === WheelEvent.DOM_DELTA_LINE ? 18
+      : event.deltaMode === WheelEvent.DOM_DELTA_PAGE ? window.innerHeight : 1;
+    this.wheelDelta += event.deltaY * units;
+    if (this.wheelFrame) return;
+    this.wheelFrame = requestAnimationFrame(() => {
+      const delta = this.wheelDelta;
+      this.wheelFrame = this.wheelDelta = 0;
+      this.zoomBy(Math.exp(Math.max(-0.4, Math.min(0.4, -delta * 0.002))));
+    });
+  };
+
   fit() {
     void this.zoom(this.scale, true);
   }
@@ -787,13 +806,14 @@ class Controller {
    * a canvas up is a blurry page, and this is a reader.
    */
   private async zoom(next: number, isFit: boolean) {
+    const requested = ++this.zoomRequest;
     this.scale = Math.max(0.25, Math.min(4, next));
     this.note();
     this.fitting = isFit;
     remember(ZOOM_KEY, isFit ? "fit" : String(this.scale));
     const back = this.at;
     const first = await this.doc.getPage(1);
-    if (!this.live) return;
+    if (!this.live || requested !== this.zoomRequest) return;
     const v1 = first.getViewport({ scale: 1 });
     if (isFit) this.scale = this.fitScale(v1.width);
     this.build(v1);

@@ -11,6 +11,11 @@
    is what makes a selection, and a selection is what the right-click menu
    -- copy, look it up, split view -- works from. */
 .pf-side-layer { position: sticky; top: 12px; z-index: 8; height: 0; }
+html:has(#pf-pages, #rd-page) { overflow-x: auto; }
+html:has(#pf-pages, #rd-page)::-webkit-scrollbar:horizontal { height: 10px; }
+html:has(#pf-pages, #rd-page)::-webkit-scrollbar:vertical { width: 0; }
+html:has(#pf-pages, #rd-page)::-webkit-scrollbar-thumb { background: var(--muted); border-radius: 5px; }
+html:has(#pf-pages, #rd-page)::-webkit-scrollbar-track { background: var(--card); }
 #pf-pages { margin: 0 auto 60px; width: fit-content; max-width: 100%; min-width: 0; }
 #pf-sidebar { position: absolute; top: 0; left: 0; width: min(276px, 100%);
   height: calc(100vh - 28px);
@@ -26,7 +31,7 @@
   border-bottom: 1px solid var(--line); }
 .pf-side-head, .pf-side-row { display: flex; align-items: center; gap: 5px; }
 .pf-side-head { min-height: 38px; flex-wrap: wrap; }
-.pf-side-head .pfat { margin-left: auto; }
+.pf-side-head .pfat { display: flex; flex: 0 0 100%; justify-content: center; align-items: center; gap: 4px; }
 .pf-side-head .pfat input { width: 3em; height: 34px; padding: 4px;
   border-color: transparent; background: color-mix(in srgb, var(--bg) 75%, var(--card));
   font-weight: 650; }

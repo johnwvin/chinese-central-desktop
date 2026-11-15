@@ -92,7 +92,7 @@ export function Notes() {
         <input aria-label="Title" placeholder="Title" value={draft.title} disabled={busy} onChange={(event) => edit({ title: event.target.value })} />
         <div className="notebook-folders">
           <select aria-label="Folder" value={draft.folder ?? ""} disabled={busy} onChange={(event) => edit({ folder: event.target.value })}>
-            <option value="">None</option>{folders.map((folder) => <option key={folder}>{folder}</option>)}
+            <option value="">Notes</option>{folders.map((folder) => <option key={folder}>{folder}</option>)}
           </select>
           <form onSubmit={(event) => {
             event.preventDefault();
