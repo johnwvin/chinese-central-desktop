@@ -45,6 +45,8 @@
   --yb-btn:#232a33; --yb-link:#f0b429; --yb-quiet:#9aa6b2;
   --yb-dim:#aab4be; --yb-faint:#8a95a1; --yb-tree:#4a5460;
   --yb-icon:#cfd6dd; }
+.wrap-dictionary button:enabled:not([aria-disabled="true"]) { cursor: pointer; }
+.wrap-dictionary button:is(:disabled, [aria-disabled="true"]) { cursor: default; }
 /* The search field and its own clear cross. The wrapper carries the sizing
    the input used to: never squeezed narrower than the placeholder, because in
    a split pane the field shrank to its automatic minimum and the prompt was
@@ -113,21 +115,20 @@
 #d-q, .fv-q { flex: 1 1 auto; width: 100%; max-width: none; font: inherit;
   font-size: 17px;
   /* Room at the right end for the cross to sit in without meeting the text. */
-  padding: 10px 42px 10px 14px;
+  padding: 10px 46px 10px 14px;
   border: 1px solid var(--line); border-radius: 9px; }
 /* Ours replaces it, so the browser's must go -- two crosses in one field
    otherwise, and only the smaller one would have the wrong cursor. */
 #d-q::-webkit-search-cancel-button,
 .fv-q::-webkit-search-cancel-button { display: none; }
-/* The hit target is the full height of the field and 40px across; the cross
-   drawn inside it stays 13px. That is the whole point: a bigger target, not
-   a bigger cross. */
-.d-clearq { position: absolute; right: 0; top: 0; height: 100%; width: 40px;
+/* The clear button uses the full height of the field. */
+.d-clearq { position: absolute; right: 0; top: 0; height: 100%; width: 44px;
   display: flex; align-items: center; justify-content: center;
   background: none; border: 0; padding: 0; margin: 0;
-   color: var(--muted); border-radius: 0 9px 9px 0; }
-.d-clearq:hover { color: var(--ink); }
-.d-clearq svg { width: 13px; height: 13px; display: block; }
+  color: var(--yb-dim); border-radius: 6px; font-size: 19px; line-height: 1; }
+.d-clearq:hover, .d-clearq:focus-visible { background: var(--yb-zebra); color: var(--yb-ink); }
+.d-clearq:focus-visible { box-shadow: inset 0 0 0 2px var(--yb-link); }
+.d-clearq svg { width: 19px; height: 19px; display: block; pointer-events: none; }
 /* Nothing to clear, nothing to press. `:placeholder-shown` is true exactly
    when the field is empty, however it came to be empty. */
 #d-q:placeholder-shown ~ .d-clearq,
@@ -138,9 +139,9 @@
   background: #242c36; border-color: #3d4754; } }
 :root[data-theme="dark"] #d-q,
 :root[data-theme="dark"] .fv-q { background: #242c36; border-color: #3d4754; }
-#d-search #d-q { min-width: 0; padding: 6px 32px 6px 10px; border: 0; border-radius: 0;
+#d-search #d-q { min-width: 0; padding: 6px 46px 6px 10px; border: 0; border-radius: 0;
   background: transparent; color: var(--yb-ink); font-size: 15px; }
-#d-search .d-clearq { width: 32px; }
+#d-search #d-q:placeholder-shown { padding-inline-end: 10px; }
 /* Dark tables drop the zebra: every row wears the stripe colour, with a
    breath of pane showing between rows. Light keeps the YellowBridge look. */
 @media (prefers-color-scheme: dark) {
