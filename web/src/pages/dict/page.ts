@@ -278,7 +278,8 @@ function run(): void {
     const summary = document.createElement("summary");
     summary.className = "dcrumb";
     summary.textContent = "…";
-    summary.setAttribute("aria-label", "More visited words");
+    summary.title = "Earlier visits";
+    summary.setAttribute("aria-label", summary.title);
     const menu = document.createElement("div");
     menu.className = "dcrumb-menu";
     overflow.append(summary, menu);
@@ -325,27 +326,28 @@ function run(): void {
       if (index < words.length - 1) crumb.appendChild(sep);
       bar.appendChild(crumb);
     });
-    const clear = document.createElement("button");
-    clear.type = "button";
-    clear.className = "dcrumb dcrumb-clear";
-    clear.textContent = "×";
-    clear.title = "Clear breadcrumbs";
-    clear.setAttribute("aria-label", clear.title);
-    clear.onclick = () => {
+    const reset = document.createElement("button");
+    reset.type = "button";
+    reset.className = "dcrumb-reset";
+    reset.title = "Reset breadcrumbs";
+    reset.setAttribute("aria-label", reset.title);
+    reset.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10a8 8 0 1 1 1.8 7M4 4v6h6"/></svg>';
+    reset.onclick = () => {
       trail = [];
       saveWord(stepHere(), "visit");
       renderCrumbs();
       el<HTMLInputElement>("#d-q").focus();
     };
-    bar.appendChild(clear);
+    bar.appendChild(reset);
     fitCrumbs = () => {
       overflow.hidden = true;
       crumbs.forEach(({ crumb, menuLink }) => {
         crumb.hidden = false;
         menuLink.hidden = true;
       });
+      const right = bar.getBoundingClientRect().right - parseFloat(getComputedStyle(bar).paddingRight) - bar.clientLeft;
       for (const { crumb, menuLink } of crumbs) {
-        if (clear.getBoundingClientRect().right <= bar.getBoundingClientRect().right) break;
+        if (reset.getBoundingClientRect().right <= right + 0.5) break;
         overflow.hidden = false;
         crumb.hidden = true;
         menuLink.hidden = false;
