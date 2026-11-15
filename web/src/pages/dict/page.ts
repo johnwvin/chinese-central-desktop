@@ -96,7 +96,7 @@ function run(): void {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ script: SCRIPT }),
       }).catch(() => {});
-      if (DATA && (DATA.q || activeSearch)) look(DATA.q, false, TAB, ENT, false, undefined, undefined, true, activeSearch);
+      if (DATA && (DATA.q || activeSearch)) look(DATA.q, false, TAB, ENT, false, undefined, undefined, "refresh", activeSearch);
     });
   });
   // The stroke speed lives on disk with the rest of the user's data.
@@ -115,7 +115,7 @@ function run(): void {
       if ((p.script === "trad" || p.script === "simp") && p.script !== SCRIPT) {
         SCRIPT = p.script;
         paintScript();
-        if (DATA && (DATA.q || activeSearch)) look(DATA.q, false, TAB, ENT, false, undefined, undefined, true, activeSearch);
+        if (DATA && (DATA.q || activeSearch)) look(DATA.q, false, TAB, ENT, false, undefined, undefined, "refresh", activeSearch);
       }
     })
     .catch(() => {});
@@ -186,6 +186,7 @@ function run(): void {
     ent: number | null;
     y: number;
   }
+  type TrailUpdate = "visit" | "return" | "refresh";
   let trail: Step[] = [];
 
   function onWordPage(): boolean {
@@ -204,11 +205,17 @@ function run(): void {
   function stepHere(): Step {
     return { q: (DATA && DATA.q) || "", tab: TAB, ent: ENT, y: scrollNow() };
   }
-  function saveWord(step: Step, add: boolean): void {
+  function saveWord(step: Step, update: TrailUpdate): void {
     if (!onWordPage()) return;
     const index = trail.findIndex((item) => item.q === step.q);
-    if (index >= 0) trail[index] = step;
-    else if (add) trail.push(step);
+    if (update === "refresh") {
+      if (index >= 0) trail[index] = step;
+      return;
+    }
+    // Back/Forward can revisit a word without reviving a cleared crumb.
+    if (index < 0 && update === "return") return;
+    if (index >= 0) trail.splice(index, 1);
+    trail.push(step);
   }
 
   /**
@@ -326,7 +333,7 @@ function run(): void {
     clear.setAttribute("aria-label", clear.title);
     clear.onclick = () => {
       trail = [];
-      saveWord(stepHere(), true);
+      saveWord(stepHere(), "visit");
       renderCrumbs();
       el<HTMLInputElement>("#d-q").focus();
     };
@@ -350,7 +357,7 @@ function run(): void {
 
   function rememberPage(): void {
     const here = stepHere();
-    saveWord(here, false);
+    saveWord(here, "refresh");
     try {
       history.replaceState({ ...history.state, y: here.y }, "");
     } catch { /* Saving the scroll position is optional. */ }
@@ -945,7 +952,7 @@ function run(): void {
   function openEntry(i: number | null): void {
     rememberPage();
     ENT = i;
-    saveWord(stepHere(), true);
+    saveWord(stepHere(), "visit");
     renderCrumbs();
     renderWord(DATA!);
     // The thesaurus follows the reading that is open, so it is redrawn with
@@ -2746,7 +2753,7 @@ function run(): void {
         button.onclick = () => {
           const next = new URLSearchParams(params);
           next.set("page", String(page));
-          loadAddress(next, true, true, false);
+          loadAddress(next, true, "visit", false);
         };
         nav.appendChild(button);
       }
@@ -2790,7 +2797,7 @@ function run(): void {
     rec?: boolean,
     py?: string,
     selected?: Entry,
-    trackVisit = true,
+    trailUpdate: TrailUpdate = "visit",
     filters?: URLSearchParams,
   ): void {
     const request = ++lookupRequest;
@@ -2895,7 +2902,7 @@ function run(): void {
         renderCharacter(d);
         renderEtymology(d);
         showTab(tab || TAB || "word", false);
-        if (trackVisit) saveWord({ ...stepHere(), y: LANDAT ?? 0 }, true);
+        if (trailUpdate !== "refresh") saveWord({ ...stepHere(), y: LANDAT ?? 0 }, trailUpdate);
         renderCrumbs();
         if (push) putUrl();
         land();
@@ -2919,8 +2926,8 @@ function run(): void {
     loadAddress(searchParams(searchBox.value, modeInput.value, matchInput.value, strokesInput.value), true);
   });
   window.__ccDictionaryLookup = (url) => loadAddress(url.searchParams, true);
-  window.addEventListener("popstate", () => loadAddress(new URLSearchParams(location.search), false, false));
-  function loadAddress(sp: URLSearchParams, push: boolean, trackVisit = true, record = push): void {
+  window.addEventListener("popstate", () => loadAddress(new URLSearchParams(location.search), false, "return"));
+  function loadAddress(sp: URLSearchParams, push: boolean, trailUpdate: TrailUpdate = "visit", record = push): void {
     // Where this entry was left, if it was ever left rather than opened. A
     // first load and a typed-in address have none, and the top is right for
     // both.
@@ -2931,7 +2938,7 @@ function run(): void {
     searchBox.value = q;
     if (!push) updateSearchControls(params);
     const e = parseInt(sp.get("e") || "", 10);
-    look(q, push, sp.get("tab") || "word", isNaN(e) ? null : e, record, sp.get("p") || "", undefined, trackVisit, params);
+    look(q, push, sp.get("tab") || "word", isNaN(e) ? null : e, record, sp.get("p") || "", undefined, trailUpdate, params);
   }
   loadAddress(new URLSearchParams(location.search), false);
 }
