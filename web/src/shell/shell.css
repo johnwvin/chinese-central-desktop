@@ -317,7 +317,6 @@ html.cc-tabbar-hidden #strip { display: none; }
    It takes up its future space and moves neighbours aside before release. */
 #tabs .drop-preview,
 #tabs .drop-preview-group {
-  pointer-events: none;
   flex: 0 0 auto;
   opacity: 0.72;
   filter: saturate(0.8);

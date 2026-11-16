@@ -32,6 +32,19 @@ export function TabStrip({ shell }: { shell: Shell }) {
   const dragSource = useRef<{ tab?: number; group?: number } | null>(null);
   const [dropAt, setDropAt] = useState<{ id: number; kind: "tab" | "group" | "start"; before: boolean } | null>(null);
   const dropTarget = useRef<typeof dropAt>(null);
+  const revealTab = useRef<number | null>(null);
+  useLayoutEffect(() => {
+    if (dragging || revealTab.current == null) return;
+    const movedId = revealTab.current;
+    revealTab.current = null;
+    const row = strip.current;
+    const tab = row?.querySelector<HTMLElement>('[data-strip-kind="tab"][data-strip-id="' + movedId + '"]');
+    if (!row || !tab) return;
+    const bounds = row.getBoundingClientRect();
+    const box = tab.getBoundingClientRect();
+    if (box.right > bounds.right) row.scrollLeft += Math.ceil(box.right - bounds.right);
+    else if (box.left < bounds.left) row.scrollLeft -= Math.ceil(bounds.left - box.left);
+  }, [dragging, shell.tabs]);
   const markDrop = (target: NonNullable<typeof dropAt>) => {
     if (dropTarget.current?.id === target.id && dropTarget.current.kind === target.kind && dropTarget.current.before === target.before) return;
     dropTarget.current = target;
@@ -53,6 +66,7 @@ export function TabStrip({ shell }: { shell: Shell }) {
   const land = (target: NonNullable<typeof dropAt>) => {
     const source = dragSource.current;
     if (!source) return;
+    if (source.tab != null) revealTab.current = source.tab;
     if (target.kind === "start") {
       // Home stays pinned; the dropped tab becomes the first ordinary tab.
       if (source.tab != null) shell.move(source.tab, 1, null);
@@ -270,9 +284,11 @@ export function TabStrip({ shell }: { shell: Shell }) {
           if (!dragSource.current) return;
           ev.preventDefault();
           ev.dataTransfer.dropEffect = "move";
-          // The in-row ghost has no pointer events. When it sits under the
-          // cursor, find the closest real tab so the drop still has a target.
-          const target = (ev.target as Element).closest<HTMLElement>("[data-strip-kind]");
+          const hit = ev.target as Element;
+          // Keep the displayed destination when the pointer is over its preview.
+          // Resolving the nearest tab again can pick the next (folded) group.
+          if (hit.closest(".drop-preview, .drop-preview-group")) return;
+          const target = hit.closest<HTMLElement>("[data-strip-kind]");
           const items = target ? [target] : [...(strip.current?.querySelectorAll<HTMLElement>("[data-strip-kind]") ?? [])];
           const nearest = items.reduce<HTMLElement | null>((best, item) => {
             const box = item.getBoundingClientRect();

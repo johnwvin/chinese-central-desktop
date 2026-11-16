@@ -491,7 +491,9 @@ function change(state: State, action: Action): State {
       // Home holds the first slot come what may: the pinned tab is defined by
       // being first, and shuffling it along made a different tab unclosable.
       if (from <= 0) return state;
-      const to = Math.max(1, Math.min(state.tabs.length - 1, action.to));
+      // The drop names a gap before removing the source tab.
+      const gap = Math.max(1, Math.min(state.tabs.length, action.to));
+      const to = gap > from ? gap - 1 : gap;
       const tabs = [...state.tabs];
       const [tab] = tabs.splice(from, 1);
 
