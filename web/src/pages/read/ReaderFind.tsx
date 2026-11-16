@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import { ActionIcon } from "../../ui/ActionIcon";
 
 export interface FindHit { unit: number; occurrence: number }
@@ -77,8 +78,9 @@ export function ReaderFind({ units, text, reveal }: {
 
   useEffect(() => {
     const show = () => {
-      setOpen(true);
-      requestAnimationFrame(() => { input.current?.focus(); input.current?.select(); });
+      if (!input.current) flushSync(() => setOpen(true));
+      input.current?.focus({ preventScroll: true });
+      input.current?.select();
     };
     const key = (event: KeyboardEvent) => {
       if (event.ctrlKey && !event.altKey && !event.shiftKey && !event.metaKey
