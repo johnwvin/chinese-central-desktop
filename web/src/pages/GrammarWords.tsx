@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { HubPage } from "./HubPage";
+import { ActionIcon } from "../ui/ActionIcon";
 import { grammarTerms } from "./dict/grammarTerms";
 import { plainly } from "./dict/pinyin";
+import { convertScriptText } from "./read/scriptMode";
 import "./dictionary.css";
 import "./grammar-words.css";
 
@@ -14,6 +16,7 @@ const terms = grammarTerms.map(([term, pinyin, meaning]) => ({
 }));
 
 type Card = (typeof terms)[number];
+const PAGE_SIZE = 30;
 
 function shuffled(cards: Card[]): Card[] {
   const deck = cards.slice();
@@ -95,59 +98,90 @@ function FlashcardTest({ cards, onBack }: { cards: Card[]; onBack: () => void })
 
 export function GrammarWords() {
   const [query, setQuery] = useState("");
+  const [page, setPage] = useState(0);
+  const scrollRegion = useRef<HTMLDivElement>(null);
   const [testCards, setTestCards] = useState<Card[] | null>(null);
   const text = query.trim().toLowerCase();
   const sounds = searchPinyin(text);
+  const simplified = convertScriptText(text, "simp");
   const rows = terms.filter(({ term, meaning, pinyinKey }) =>
-    term.includes(text) || meaning.toLowerCase().includes(text) || (sounds && pinyinKey.includes(sounds))
+    term.includes(simplified) || meaning.toLowerCase().includes(text) || (sounds && pinyinKey.includes(sounds))
   );
 
+  const pageCount = Math.ceil(rows.length / PAGE_SIZE);
+  const visibleRows = rows.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+
+  function goToPage(next: number) {
+    setPage(next);
+    scrollRegion.current?.scrollTo({ top: 0, behavior: "instant" });
+  }
+
+  function search(value: string) {
+    setQuery(value);
+    goToPage(0);
+  }
+
   return (
-    <HubPage name="dictionary">
-      {testCards ? (
-        <FlashcardTest cards={testCards} onBack={() => setTestCards(null)} />
-      ) : (
+    <HubPage name="dictionary" scrollRegionId="d-results">
+      {!testCards && (
         <>
           <h1>Grammar Terms</h1>
           <div className="searchbar grammar-words-search">
             <span className="d-qwrap">
               <input type="search" className="fv-q" placeholder="Search" aria-label="Search grammar terms"
-                autoComplete="off" spellCheck={false} value={query} onChange={(event) => setQuery(event.target.value)} />
+                autoComplete="off" spellCheck={false} value={query} onChange={(event) => search(event.target.value)} />
               {query && <button type="button" className="d-clearq" aria-label="Clear search" onClick={(event) => {
                 event.currentTarget.parentElement?.querySelector("input")?.focus();
-                setQuery("");
+                search("");
               }}>×</button>}
             </span>
             <button className="grammar-test-button" type="button" title="Flashcard test" aria-label="Flashcard test"
               disabled={rows.length === 0} onClick={() => setTestCards(rows)}>闪卡</button>
+            {pageCount > 1 && (
+              <nav className="grammar-pagination" aria-label="Grammar terms pages">
+                <button className="grammar-test-button" type="button" aria-label="Previous page" title="Previous page"
+                  disabled={page === 0} onClick={() => goToPage(page - 1)}><ActionIcon name="back" /></button>
+                <span aria-live="polite">{page + 1} / {pageCount}</span>
+                <button className="grammar-test-button" type="button" aria-label="Next page" title="Next page"
+                  disabled={page + 1 >= pageCount} onClick={() => goToPage(page + 1)}><ActionIcon name="forward" /></button>
+              </nav>
+            )}
           </div>
-          {rows.length === 0 && <p role="status">No matching terms.</p>}
-          {rows.length > 0 && (
-            <div className="ybsec grammar-words">
-              <table className="ybtable">
-                <thead>
-                  <tr className="ybhead">
-                    <th scope="col">Term / Pinyin</th>
-                    <th scope="col">Meaning</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map(({ term, pinyin, meaning }) => (
-                    <tr key={term}>
-                      <td>
-                        <a className="zhword" href={`/dictionary?${new URLSearchParams({ q: term, p: pinyin })}`}
-                          target="_blank" rel="noreferrer">{term}</a>
-                        <div className="grammar-word-pinyin">{pinyin}</div>
-                      </td>
-                      <td>{meaning}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
         </>
       )}
+      <div ref={scrollRegion} id="d-results" className="dict-scroll" role="region" aria-label="Grammar terms results" tabIndex={0}>
+        {testCards ? (
+          <FlashcardTest cards={testCards} onBack={() => setTestCards(null)} />
+        ) : (
+          <>
+            {rows.length === 0 && <p role="status">No matching terms.</p>}
+            {rows.length > 0 && (
+              <div className="ybsec grammar-words">
+                <table className="ybtable">
+                  <thead>
+                    <tr className="ybhead">
+                      <th scope="col">Term / Pinyin</th>
+                      <th scope="col">Meaning</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {visibleRows.map(({ term, pinyin, meaning }) => (
+                      <tr key={term}>
+                        <td>
+                          <a className="zhword" href={`/dictionary?${new URLSearchParams({ q: term, p: pinyin })}`}
+                            target="_blank" rel="noreferrer">{term}</a>
+                          <div className="grammar-word-pinyin">{pinyin}</div>
+                        </td>
+                        <td>{meaning}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </>
+        )}
+      </div>
     </HubPage>
   );
 }

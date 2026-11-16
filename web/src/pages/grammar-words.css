@@ -12,9 +12,28 @@
 }
 .grammar-words {
   max-width: 1000px;
-  overflow-x: auto;
 }
+.grammar-pagination {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-inline-start: auto;
+  color: var(--yb-dim);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.grammar-pagination button {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  padding: 0;
+}
+.grammar-pagination svg { width: 18px; height: 18px; }
 .grammar-words th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #fdbc1e;
   padding: 10px 12px;
   text-align: left;
   color: #111;

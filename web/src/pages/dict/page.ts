@@ -194,16 +194,10 @@ function run(): void {
       (DATA.entries.length <= 1 || ENT != null));
   }
 
-  /** The dictionary is a page in a frame, so the document is what scrolls. */
-  function scroller(): Element {
-    return document.scrollingElement || document.documentElement;
-  }
-  function scrollNow(): number {
-    return scroller().scrollTop || 0;
-  }
+  const results = el("#d-results");
   /** How this page stands right now, for the trail and for history.state. */
   function stepHere(): Step {
-    return { q: (DATA && DATA.q) || "", tab: TAB, ent: ENT, y: scrollNow() };
+    return { q: (DATA && DATA.q) || "", tab: TAB, ent: ENT, y: results.scrollTop };
   }
   function saveWord(step: Step, update: TrailUpdate): void {
     if (!onWordPage()) return;
@@ -238,9 +232,10 @@ function run(): void {
        character data arrives. Setting the same number again costs nothing
        and is invisible when it was already there. */
     const put = () => {
-      scroller().scrollTop = y;
+      results.scrollTop = y;
     };
     put();
+    if (y === 0) return;
     requestAnimationFrame(put);
     setTimeout(put, 160);
   }
@@ -2768,6 +2763,8 @@ function run(): void {
 
   function showTab(tab: string, push?: boolean): void {
     if (TABS.indexOf(tab) < 0) tab = "word";
+    const switchingTabs = push && tab !== TAB;
+    if (switchingTabs) rememberPage();
     TAB = tab;
     TABS.forEach((t) => {
       el("#pane-" + t).hidden = t !== tab;
@@ -2780,6 +2777,7 @@ function run(): void {
       // the first character.
       buildStrokes(DATA);
     }
+    if (switchingTabs) results.scrollTop = 0;
     if (push) putUrl();
   }
   function wordPageUrl({ q, ent, tab }: Step): string {
@@ -2816,7 +2814,10 @@ function run(): void {
       .then((r) => r.json())
       .then((d: DictData) => {
         if (request !== lookupRequest) return;
-        if (push && !d.error) rememberPage();
+        if (push && !d.error) {
+          rememberPage();
+          LANDAT ??= 0;
+        }
         DATA = d;
         activeSearch = d.search ? params : undefined;
         // The box says what is on screen. Following a character used to open

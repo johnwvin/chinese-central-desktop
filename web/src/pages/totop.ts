@@ -38,7 +38,8 @@ function style() {
 }
 
 /** Installs the button for the mounted page and removes it on navigation. */
-export function installBackToTop() {
+export function installBackToTop(region?: HTMLElement) {
+  const scrollTarget = region ?? window;
   if (document.getElementById(ID)) return;
   style();
 
@@ -57,14 +58,14 @@ export function installBackToTop() {
   // back makes the browser lay the page out again on every frame of the trip.
   // "instant" rather than the default so a page with scroll-behavior: smooth
   // cannot put the animation back. Keep in step with backtotop.html.
-  btn.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "instant" }));
+  btn.addEventListener("click", () => scrollTarget.scrollTo({ top: 0, behavior: "instant" }));
   document.body.appendChild(btn);
 
   let on = false;
   let waiting = false;
   const paint = () => {
     waiting = false;
-    const want = (window.scrollY || document.documentElement.scrollTop || 0) > SHOW;
+    const want = (region?.scrollTop ?? window.scrollY) > SHOW;
     if (want === on) return;
     on = want;
     btn.classList.toggle("on", on);
@@ -74,11 +75,11 @@ export function installBackToTop() {
     waiting = true;
     requestAnimationFrame(paint);
   };
-  window.addEventListener("scroll", onScroll, { passive: true });
+  scrollTarget.addEventListener("scroll", onScroll, { passive: true });
   window.addEventListener("resize", paint);
   paint();
   return () => {
-    window.removeEventListener("scroll", onScroll);
+    scrollTarget.removeEventListener("scroll", onScroll);
     window.removeEventListener("resize", paint);
     btn.remove();
   };

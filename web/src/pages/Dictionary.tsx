@@ -41,7 +41,7 @@ export function Dictionary() {
     }
   });
   return (
-    <HubPage name="dictionary">
+    <HubPage name="dictionary" scrollRegionId="d-results">
       {popped && (
         <button
           type="button"
@@ -166,9 +166,11 @@ export function Dictionary() {
           </button>
         ))}
       </div>
-      {TABS.map(([key]) => (
-        <div key={key} id={"pane-" + key} className="dpane" hidden={key !== "word"}></div>
-      ))}
+      <div id="d-results" className="dict-scroll" role="region" aria-label="Dictionary results" tabIndex={0}>
+        {TABS.map(([key]) => (
+          <div key={key} id={"pane-" + key} className="dpane" hidden={key !== "word"}></div>
+        ))}
+      </div>
     </HubPage>
   );
 }

@@ -188,6 +188,22 @@
   border: 1px solid var(--line); background: var(--card);
   color: var(--muted); text-decoration: none; }
 .d-ranks:hover { border-color: #fdbc1e; color: var(--ink); }
+:root:has(.wrap-dictionary > .dict-scroll) { overflow: hidden; }
+.wrap-dictionary:has(> .dict-scroll) {
+  display: flex;
+  flex-direction: column;
+  block-size: 100dvh;
+  padding-bottom: 0;
+}
+.wrap-dictionary:has(> .dict-scroll) > :not(.dict-scroll) { flex-shrink: 0; }
+.dict-scroll {
+  flex: 1 1 auto;
+  min-block-size: 0;
+  min-inline-size: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
 /* Folder tabs over the reference panel. */
 .dtabs { display: flex; gap: 3px; flex-wrap: wrap; align-items: flex-end;
   border-bottom: 3px solid #fdbc1e; }
@@ -277,7 +293,7 @@
 .ety-tree .tg.has:hover { color: var(--yb-link); }
 .ety-tree li.closed > ul { display: none; }
 .dpane:empty { display: none; }
-#d-tabs[hidden] ~ .dpane { border-top: 1px solid var(--yb-bd);
+#d-tabs[hidden] + .dict-scroll .dpane { border-top: 1px solid var(--yb-bd);
   border-radius: 10px; }
 .dpane a { color: var(--yb-link); text-decoration: none; font-weight: 600; }
 .dpane .quiet { color: var(--yb-quiet); }

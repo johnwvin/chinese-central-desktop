@@ -17,10 +17,16 @@ import "./hub.css";
  * landed. In the head they are fetched before the first paint and the page is
  * drawn once.
  */
-export function HubPage({ name, children }: { name: string; children: ReactNode }) {
+export function HubPage({ name, children, scrollRegionId }: {
+  name: string;
+  children: ReactNode;
+  scrollRegionId?: string;
+}) {
   useEffect(installContextMenu, []);
   useEffect(installVolume, []);
-  useEffect(() => name === "books" ? undefined : installBackToTop(), [name]);
+  useEffect(() => name === "books" ? undefined : installBackToTop(
+    scrollRegionId ? document.getElementById(scrollRegionId) ?? undefined : undefined,
+  ), [name, scrollRegionId]);
   return <div className={`wrap wrap-${name}`}>{children}</div>;
 }
 
