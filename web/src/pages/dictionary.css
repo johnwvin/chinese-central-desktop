@@ -182,7 +182,7 @@
    that pair rather than as a third state of it -- it does not switch
    anything, it goes somewhere -- so it keeps their size and weight and its
    own border. */
-.d-ranks { display: inline-flex; align-items: center;
+.d-ranks { display: inline-flex; align-items: center; column-gap: 4px;
   font-size: 13.5px; font-weight: 600; line-height: 1;
   padding: 9px 13px; border-radius: 9px;
   border: 1px solid var(--line); background: var(--card);

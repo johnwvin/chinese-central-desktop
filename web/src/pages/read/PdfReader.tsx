@@ -9,6 +9,7 @@ import {
 } from "./pdfjs";
 import { JumpHistory, type ReadingSpot } from "./jumpHistory";
 import { ReaderFind, matchRange, showFindRange, waitForFind } from "./ReaderFind";
+import { PdfPan } from "./PdfPan";
 import { ReaderBookmark } from "./ReaderBookmark";
 
 type Chapter = { title: string; page: number; depth: number };
@@ -330,6 +331,7 @@ export function PdfReader({ f }: { f: string }) {
           </aside>
           </div>
           <div id="pf-pages" ref={pagesBox} />
+          <PdfPan pages={pagesBox} ready={ready} />
         </div>
       </div>
       {ready ? null : (
