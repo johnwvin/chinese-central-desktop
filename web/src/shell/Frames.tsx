@@ -56,14 +56,6 @@ export function Frames({ shell }: { shell: Shell }) {
           shell.lookupBeside(String(url), tab.id);
         };
       }
-      // A way out, for the few things that are not ours. `w.open` is replaced
-      // real browser tab -- but that caught the right-click menu's Search
-      // Google too, which opened an app tab that then sat blank. This is the
-      // shell's own `open`, which nothing has touched, so a link that really
-      // does belong outside gets a real tab in the browser the app runs in.
-      if (win) win.__ccOpenExternal = (url: string) => {
-        if (url) window.open(String(url), "_blank", "noopener");
-      };
     } catch {
       // Same-origin only; a page we cannot reach simply opens on top.
     }
@@ -449,6 +441,5 @@ declare global {
     __ccSetTrim?: (level: number, keep: boolean) => void;
     __ccSplitOpen?: (url: string) => void;
     __ccSplitReplace?: (url: string) => void;
-    __ccOpenExternal?: (url: string) => void;
   }
 }

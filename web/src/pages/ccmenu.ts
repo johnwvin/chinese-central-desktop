@@ -20,8 +20,6 @@ declare global {
     __ccSplitReplace?: (url: string) => void;
     /** Run the same selected-text dictionary action as the context menu. */
     __ccDefineSelection?: (text?: string) => boolean;
-    /** The shell's own `open`, for the one entry that leaves the app. */
-    __ccOpenExternal?: (url: string) => void;
     /** True while a looked-up phrase is still lit on the page. */
     __ccLit?: boolean;
   }
@@ -490,24 +488,15 @@ export function installContextMenu() {
         }),
       );
     }
-    menu.appendChild(sep());
-    menu.appendChild(
-      item("Search Google", ICON.search, () => {
-        // A desktop webview is not the user's browser. The local app passes
-        // this search to the OS default browser; window.open is a fallback.
-        const url = "https://www.google.com/search?q=" + encodeURIComponent(sel);
-        fetch("/api/central/open-external", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", "X-CC-Desktop": "1" },
-          body: JSON.stringify({ url }),
-        }).then((response) => {
-          if (!response.ok) throw new Error("Could not open your browser");
-        }).catch(() => {
-          if (window.__ccOpenExternal) window.__ccOpenExternal(url);
-          else window.open(url, "_blank", "noopener");
-        });
-      }),
-    );
+    if (window.__ccSplitOpen) {
+      menu.appendChild(sep());
+      menu.appendChild(
+        item("Search Google", ICON.search, () => {
+          const url = "https://www.google.com/search?q=" + encodeURIComponent(sel);
+          window.__ccSplitOpen?.("/browser?url=" + encodeURIComponent(url));
+        }),
+      );
+    }
 
     document.body.appendChild(menu);
     let x = ev.clientX;
