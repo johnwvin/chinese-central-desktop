@@ -1282,56 +1282,56 @@ function run(): void {
     const pane = el("#pane-examples");
     pane.innerHTML = "";
     const all = d.examples || [];
-    /* SENTENCES FOR THE READING THAT IS OPEN.
-       The sentences are found by looking for the characters, which cannot
-       tell 车 the car from 车 the chariot -- so opening the chariot handed you
-       a page of taxis and trains. Each one arrives knowing how the word is
-       said in it (see readingIn in go/internal/dict), and a reading only
-       shows its own.
-       Only where there is something to tell apart: a word with one reading
-       has no wrong meaning to be filed under, and filtering it would throw
-       away every sentence whose reading could not be worked out. And a
-       sentence that does not know its own reading is left out rather than
-       guessed at -- that guess is the whole of what was wrong. */
-    const open = ENT != null ? d.entries[ENT] : null;
-    const want = open && readings(d).length > 1 ? open.p : "";
-    const ex = want ? all.filter((p) => p[2] && sameReading(p[2]!, want)) : all;
-    if (!ex.length) {
-      note(
-        pane,
-        want
-          ? "No example sentences for " + want + "."
-          : "No example sentences for this word.",
-      );
+    if (!all.length) {
+      note(pane, "No example sentences for this word.");
       return;
     }
-    const s = sec("Example Sentences");
-    const t = table(s);
-    ex.forEach((pair) => {
-      const tr = document.createElement("tr");
-      const td = document.createElement("td");
-      const zh = document.createElement("span");
-      zh.className = "ex-zh";
-      const sentence = convertScriptText(pair[0], SCRIPT as "simp" | "trad");
-      const query = convertScriptText(d.q, SCRIPT as "simp" | "trad");
-      const parts = sentence.split(query);
-      parts.forEach((chunk, i) => {
-        if (i) {
-          const b = document.createElement("b");
-          b.textContent = query;
-          zh.appendChild(b);
+    const open = ENT != null ? d.entries[ENT] : null;
+    const want = open && readings(d).length > 1 ? open.p : "";
+    if (!want) {
+      renderSet("Example Sentences", all);
+      return;
+    }
+    renderSet("Example Sentences", all.filter((pair) => pair[2] && sameReading(pair[2], want)));
+    renderSet("Examples · Reading Unconfirmed", all.filter((pair) => !pair[2]));
+    renderSet("Examples · Other Readings", all.filter((pair) => pair[2] && !sameReading(pair[2], want)), true);
+
+    function renderSet(heading: string, examples: NonNullable<DictData["examples"]>, showReading = false): void {
+      if (!examples.length) return;
+      const s = sec(heading);
+      const t = table(s);
+      examples.forEach((pair) => {
+        const tr = document.createElement("tr");
+        const td = document.createElement("td");
+        const zh = document.createElement("span");
+        zh.className = "ex-zh";
+        const sentence = convertScriptText(pair[0], SCRIPT as "simp" | "trad");
+        const query = convertScriptText(d.q, SCRIPT as "simp" | "trad");
+        const parts = sentence.split(query);
+        parts.forEach((chunk, i) => {
+          if (i) {
+            const b = document.createElement("b");
+            b.textContent = query;
+            zh.appendChild(b);
+          }
+          zh.appendChild(document.createTextNode(chunk));
+        });
+        td.appendChild(zh);
+        if (showReading && pair[2]) {
+          const reading = document.createElement("span");
+          reading.className = "ex-en";
+          reading.textContent = pair[2];
+          td.appendChild(reading);
         }
-        zh.appendChild(document.createTextNode(chunk));
+        const en = document.createElement("span");
+        en.className = "ex-en";
+        en.textContent = pair[1];
+        td.appendChild(en);
+        tr.appendChild(td);
+        t.appendChild(tr);
       });
-      td.appendChild(zh);
-      const en = document.createElement("span");
-      en.className = "ex-en";
-      en.textContent = pair[1];
-      td.appendChild(en);
-      tr.appendChild(td);
-      t.appendChild(tr);
-    });
-    pane.appendChild(s);
+      pane.appendChild(s);
+    }
   }
 
   /* ---------------- Strokes: writer + transport ---------------- */
