@@ -3,6 +3,11 @@ import { api, type Note } from "../api/central";
 import { confirmDialog } from "../ui/ask";
 import { HubPage } from "./HubPage";
 
+function noteName(title: string, edited: string): string {
+  if (title.trim()) return title;
+  return edited ? edited.replace("T", " ") : "Untitled";
+}
+
 const blank = (): Note => ({ id: "", title: "", body: "", at: "", folder: "" });
 
 export function Notes() {
@@ -59,7 +64,7 @@ export function Notes() {
     finally { setBusy(false); }
   }
   async function remove() {
-    if (!draft.id || !await confirmDialog({ title: "Delete note?", yes: "Delete", danger: true })) return;
+    if (!draft.id || !await confirmDialog({ title: `Delete “${noteName(draft.title, draft.at)}”?`, yes: "Delete", danger: true })) return;
     setBusy(true);
     try {
       const result = await api.deleteNote(draft.id);
@@ -82,14 +87,14 @@ export function Notes() {
       <aside id="notebook-sidebar" aria-label="Notes" hidden={!sidebarOpen}>
         <button className="btn" type="button" disabled={busy} onClick={() => void choose(blank())}>New note</button>
         <input type="search" aria-label="Search notes" placeholder="Search" value={query} onChange={(event) => setQuery(event.target.value)} />
-        <ul>{list.filter((note) => (note.title + " " + note.body).toLowerCase().includes(query.toLowerCase())).map((note) =>
+        <ul>{list.filter((note) => `${noteName(note.title, note.at)} ${note.body}`.toLowerCase().includes(query.toLowerCase())).map((note) =>
           <li key={note.id}><button className="btn" type="button" aria-pressed={draft.id === note.id} disabled={busy} onClick={() => void choose(note)}>
-            {note.title || "Untitled"}{note.folder && <small>{note.folder}</small>}
+            {noteName(note.title, note.at)}{note.folder && <small>{note.folder}</small>}
           </button></li>)}</ul>
       </aside>
       </div>
       <div className="notebook-editor">
-        <input aria-label="Title" placeholder="Title" value={draft.title} disabled={busy} onChange={(event) => edit({ title: event.target.value })} />
+        <input aria-label="Title" placeholder={draft.at ? noteName("", draft.at) : "Title"} value={draft.title} disabled={busy} onChange={(event) => edit({ title: event.target.value })} />
         <div className="notebook-folders">
           <select aria-label="Folder" value={draft.folder ?? ""} disabled={busy} onChange={(event) => edit({ folder: event.target.value })}>
             <option value="">Notes</option>{folders.map((folder) => <option key={folder}>{folder}</option>)}
