@@ -169,6 +169,15 @@ function settle(state: State, tabs: Tab[], groups: Group[], gone: Set<number>): 
   return { ...state, ...tidied, panes: home ? [home.id] : [], activeId: home ? home.id : null };
 }
 
+function normalizeSplitWidths(widths: number[], count: number): number[] {
+  const total = widths.length === count && widths.every((width) => Number.isFinite(width) && width > 0)
+    ? widths.reduce((sum, width) => sum + width, 0)
+    : 0;
+  return total > 0 && Number.isFinite(total)
+    ? widths.map((width) => width / total)
+    : Array(count).fill(1 / count);
+}
+
 function rememberSplit(
   sessions: Record<number, SplitSession>,
   panes: number[],
@@ -176,10 +185,7 @@ function rememberSplit(
   widths: number[],
 ): Record<number, SplitSession> {
   if (panes.length < 2 || activeId == null || !panes.includes(activeId)) return sessions;
-  const total = widths.length === panes.length ? widths.reduce((sum, width) => sum + width, 0) : 0;
-  const normalized = total > 0
-    ? widths.map((width) => width / total)
-    : Array(panes.length).fill(1 / panes.length);
+  const normalized = normalizeSplitWidths(widths, panes.length);
   const next = { ...sessions };
   const snapshot = { panes: [...panes], activeId, widths: normalized };
   for (const id of panes) next[id] = snapshot;
@@ -461,16 +467,12 @@ function change(state: State, action: Action): State {
     case "dropPane": {
       if (state.panes.length < 2 || !state.panes.includes(action.id)) return state;
       const panes = state.panes.filter((p) => p !== action.id);
-      const splitSessions = forgetSplit(state.splitSessions, state.panes);
+      const widths = state.splitWidths.filter((_, i) => state.panes[i] !== action.id);
       return {
         ...state,
         panes,
-        splitSessions: panes.length > 1
-          ? rememberSplit(splitSessions, panes, state.activeId === action.id ? panes[0] : state.activeId, state.splitWidths.filter((_, i) => state.panes[i] !== action.id))
-          : splitSessions,
-        splitWidths: panes.length > 1
-          ? state.splitWidths.filter((_, i) => state.panes[i] !== action.id)
-          : [1],
+        splitSessions: forgetSplit(state.splitSessions, state.panes),
+        splitWidths: normalizeSplitWidths(widths, panes.length),
         activeId: state.activeId === action.id ? panes[0] : state.activeId,
       };
     }
